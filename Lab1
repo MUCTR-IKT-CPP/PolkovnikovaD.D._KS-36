@@ -12,11 +12,22 @@
 const int ALPHABET = 26;
 const int STRING_LENGTH = 10000;
 
+/*
+ * Генерация случайного символа английского алфавита.
+ *
+ * @param c символ, который будет заменен на случайный.
+ * @return возвращает случайно сгенерированный символ от 'a' до 'z'.
+ */
 char getRandomChar(char c) {
     c = 'a'+ std::rand() % ALPHABET;
     return c;
 }
 
+/*
+ * Вывод частоты появления букв в строке.
+ *
+ * @param frequency вектор, содержащий частоту каждой буквы от 'a' до 'z'.
+ */
 void getFrequency(const std::vector<int>& frequency) {
     std::cout << "Частота появления букв в строке:\n";
     for (int i = 0; i < ALPHABET; ++i) {
@@ -26,19 +37,19 @@ void getFrequency(const std::vector<int>& frequency) {
 }
 
 int main() {
-    std::srand(static_cast<unsigned int>(std::time(nullptr)));
-    std::string randomString;
+    std::srand(static_cast<unsigned int>(std::time(nullptr))); // Инициализация генератора случайных чисел
+    std::string randomString; // Строка для хранения случайных символов
     for(int i = 0; i < STRING_LENGTH; ++i) {
-        char c = getRandomChar(c);
-        randomString += c;
+        char c = getRandomChar(c); // Получение случайного символа
+        randomString += c; // Добавление символа в строку
     }
-    std::cout << "Сгенерированная строка:\n" << randomString << "\n\n";
-    std::vector<int> frequency(ALPHABET, 0);
-    for (char c : randomString) {
+    std::cout << "Сгенерированная строка:\n" << randomString << "\n\n"; // Вывод сгенерированной строки
+    std::vector<int> frequency(ALPHABET, 0); // Инициализация вектора частоты
+    for (char c : randomString) { // Увеличение счетчика для соответствующей буквы
         frequency[c - 'a']++;
     }
     std::cout << "Частота появления букв в строке:\n";
-    getFrequency(frequency);
+    getFrequency(frequency); // Вызов функции для вывода частоты
 
     return 0;
 }
