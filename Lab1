@@ -18,8 +18,8 @@ const int STRING_LENGTH = 10000;
  * @param c символ, который будет заменен на случайный.
  * @return возвращает случайно сгенерированный символ от 'a' до 'z'.
  */
-char getRandomChar(char c) {
-    c = 'a'+ std::rand() % ALPHABET;
+char getRandomChar() {
+    char c = 'a'+ std::rand() % ALPHABET;
     return c;
 }
 
@@ -40,7 +40,7 @@ int main() {
     std::srand(static_cast<unsigned int>(std::time(nullptr))); // Инициализация генератора случайных чисел
     std::string randomString; // Строка для хранения случайных символов
     for(int i = 0; i < STRING_LENGTH; ++i) {
-        char c = getRandomChar(c); // Получение случайного символа
+        char c = getRandomChar(); // Получение случайного символа
         randomString += c; // Добавление символа в строку
     }
     std::cout << "Сгенерированная строка:\n" << randomString << "\n\n"; // Вывод сгенерированной строки
