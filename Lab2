@@ -1,0 +1,173 @@
+#include <iostream>
+#include <vector>
+#include <cstdlib>
+#include <ctime>
+#include <algorithm>
+
+using namespace std;
+
+// Функция для заполнения массива случайными числами
+
+/*
+ * Заполнение массива случайными числами.
+ *
+ * @param arr указатель на массив, который нужно заполнить.
+ * @param size размер массива.
+ */
+void fillArray(int* arr, int size) {
+    for (int i = 0; i < size; ++i) {
+        arr[i] = rand() % 21; // Случайные числа от 0 до 20
+    }
+}
+
+// Функция для поиска максимального и минимального значений
+
+/*
+ * Поиск максимального и минимального значений в массиве.
+ *
+ * @param arr указатель на массив, в котором выполняется поиск.
+ * @param size размер массива.
+ */
+void findMinMax(int* arr, int size) {
+    int minVal = arr[0], maxVal = arr[0];
+    int minIndex = 0, maxIndex = 0;
+    double sum = 0;
+
+    for (int i = 0; i < size; ++i) {
+        if (arr[i] < minVal) {
+            minVal = arr[i];
+            minIndex = i;
+        }
+        if (arr[i] > maxVal) {
+            maxVal = arr[i];
+            maxIndex = i;
+        }
+        sum += arr[i];
+    }
+
+    double average = sum / size;
+
+    // Сортируем для нахождения медианы
+    vector<int> sortedArr(arr, arr + size);
+    sort(sortedArr.begin(), sortedArr.end());
+    double median;
+    if (size % 2 == 0) {
+        median = (sortedArr[static_cast<std::vector<int>::size_type>(size) / 2 - 1] + sortedArr[static_cast<std::vector<int>::size_type>(size) / 2]) / 2.0;
+        //median = (sortedArr[size / 2 - 1] + sortedArr[size / 2]) / 2.0;
+    } else {
+        median = sortedArr[static_cast<std::vector<int>::size_type>(size) / 2];
+        //median = sortedArr[size / 2];
+    }
+
+    cout << "min: " << minVal << " (index: " << minIndex << ")\n";
+    cout << "max: " << maxVal << " (индекс: " << maxIndex << ")\n";
+    cout << "average: " << average << "\n";
+    cout << "median: " << median << "\n";
+}
+
+// Функция для формирования среза массива
+
+/*
+ * Формирование среза массива.
+ *
+ * @param arr указатель на массив.
+ * @param size размер массива.
+ * @param a начальный индекс среза.
+ * @param b конечный индекс среза.
+ */
+void sliceArray(int* arr, int size, int a, int b) {
+    if (a < 0 || b >= size || a > b) {
+        cout << "Incorrect indices.\n";
+        return;
+    }
+
+    cout << "a slice of the array: ";
+    for (int i = a; i <= b; ++i) {
+        cout << arr[i] << " ";
+    }
+    cout << "\n";
+}
+
+// Функция сортировки вставками
+
+/*
+ * Сортировка массива методом вставок.
+ *
+ * @param arr указатель на массив, который нужно отсортировать.
+ * @param size размер массива.
+ */
+void insertionSort(int* arr, int size) {
+    int* sortedArr = new int[size];
+    copy(arr, arr + size, sortedArr);
+
+    for (int i = 1; i < size; ++i) {
+        int key = sortedArr[i];
+        int j = i - 1;
+
+        while (j >= 0 && sortedArr[j] > key) {
+            sortedArr[j + 1] = sortedArr[j];
+            j--;
+        }
+        sortedArr[j + 1] = key;
+    }
+
+    cout << "Sorted array: ";
+    for (int i = 0; i < size; ++i) {
+        cout << sortedArr[i] << " ";
+    }
+    cout << "\n";
+
+    delete[] sortedArr;
+}
+
+// Главная функция
+int main() {
+    srand(static_cast<unsigned>(time(0))); // Инициализация генератора случайных чисел
+
+    int N;
+    cout << "Enter the size of the array: ";
+    cin >> N;
+
+    if (N <= 0) {
+        cout << "The size of an array must be greater than 0.\n";
+        return 1;
+    }
+
+    int* arr = new int[N];
+    fillArray(arr, N);
+
+    cout << "Generated array: ";
+    for (int i = 0; i < N; ++i) {
+        cout << arr[i] << " ";
+    }
+    cout << "\n";
+
+    int choice;
+    cout << "Choose an option:\n";
+    cout << "1. Find min and max\n";
+    cout << "2. Slice\n";
+    cout << "3. Insertion sort\n";
+    cin >> choice;
+
+    switch (choice) {
+        case 1:
+            findMinMax(arr, N);
+            break;
+        case 2: {
+            int a, b;
+            cout << "Enter the start and end indices (a<=b): ";
+            cin >> a >> b;
+            sliceArray(arr, N, a, b);
+            break;
+        }
+        case 3:
+            insertionSort(arr, N);
+            break;
+        default:
+            cout << "Incorrect choice.\n";
+            break;
+    }
+
+    delete[] arr; // Освобождение памяти
+    return 0;
+}
