@@ -3,72 +3,121 @@
 #include <cstdlib>
 #include <ctime>
 #include <algorithm>
+#include <numeric>
 
 using namespace std;
-
-// Функция для заполнения массива случайными числами
-
 /*
- * Заполнение массива случайными числами.
+ * Заполнение массива случайными числами
  *
- * @param arr указатель на массив, который нужно заполнить.
+ * @param arr указатель на массив.
  * @param size размер массива.
  */
 void fillArray(int* arr, int size) {
     for (int i = 0; i < size; ++i) {
-        arr[i] = rand() % 21; // Случайные числа от 0 до 20
+        arr[i] = rand() % 21; // Заполнение случайными числами от 0 до 20
     }
 }
-
-// Функция для поиска максимального и минимального значений
-
 /*
- * Поиск максимального и минимального значений в массиве.
+ * Печать элементов массива
  *
- * @param arr указатель на массив, в котором выполняется поиск.
+ * @param arr указатель на массив.
  * @param size размер массива.
  */
-void findMinMax(int* arr, int size) {
-    int minVal = arr[0], maxVal = arr[0];
-    int minIndex = 0, maxIndex = 0;
-    double sum = 0;
-
+void printArray(const int* arr, int size) {
     for (int i = 0; i < size; ++i) {
+        cout << arr[i] << " ";
+    }
+    cout << endl;
+}
+/*
+ * Поиск последовательностей в массиве
+ *
+ * @param arr указатель на массив.
+ * @param size размер массива.
+ * @param type тип последовательности: "ascending"(возрастание), "descending"(убывание) или "alternating"(чередование).
+ */
+void findSequences(int* arr, int size, const std::string& type) {
+    bool found = false;
+
+    if (type == "ascending") {
+        for (int i = 0; i < size - 2; ++i) {
+            if (arr[i] < arr[i + 1] && arr[i + 1] < arr[i + 2]) {
+                found = true;
+                cout << "Ascending sequence starting at index " << i << ": ";
+                for (int j = i; j < size && arr[j] < arr[j + 1]; ++j) {
+                    cout << arr[j] << " ";
+                }
+                cout << endl;
+            }
+        }
+    } else if (type == "descending") {
+        for (int i = 0; i < size - 2; ++i) {
+            if (arr[i] > arr[i + 1] && arr[i + 1] > arr[i + 2]) {
+                found = true;
+                cout << "Descending sequence starting at index " << i << ": ";
+                for (int j = i; j < size && arr[j] > arr[j + 1]; ++j) {
+                    cout << arr[j] << " ";
+                }
+                cout << endl;
+            }
+        }
+    } else if (type == "alternating") {
+        for (int i = 0; i < size - 2; ++i) {
+            if ((arr[i] > arr[i + 1] && arr[i + 1] < arr[i + 2]) || (arr[i] < arr[i + 1] && arr[i + 1] > arr[i + 2])) {
+                found = true;
+                std::cout << "Alternating sequence starting at index " << i << ": ";
+                for (int j = i; j < size - 1 && ((arr[j] > arr[j + 1] && arr[j + 1] < arr[j + 2]) || (arr[j] < arr[j + 1] && arr[j + 1] > arr[j + 2])); ++j) {
+                    cout << arr[j] << " ";
+                }
+                cout << endl;
+            }
+        }
+    }
+
+    if (!found) {
+        cout << "No sequences found." << endl;
+    }
+}
+/*
+ * Нахождение минимального, максимального значений, среднего и медианы
+ *
+ * @param arr указатель на массив.
+ * @param size размер массива.
+ */
+void findMinMaxAvgMedian(int* arr, int size) {
+    int minVal = arr[0], maxVal = arr[0];
+    int minIdx = 0, maxIdx = 0;
+
+    for (int i = 1; i < size; ++i) {
         if (arr[i] < minVal) {
             minVal = arr[i];
-            minIndex = i;
+            minIdx = i;
         }
         if (arr[i] > maxVal) {
             maxVal = arr[i];
-            maxIndex = i;
+            maxIdx = i;
         }
-        sum += arr[i];
     }
 
-    double average = sum / size;
+    double avg = static_cast<double>(std::accumulate(arr, arr + size, 0)) / size;
 
     // Сортируем для нахождения медианы
     vector<int> sortedArr(arr, arr + size);
     sort(sortedArr.begin(), sortedArr.end());
     double median;
     if (size % 2 == 0) {
-        median = (sortedArr[static_cast<std::vector<int>::size_type>(size) / 2 - 1] + sortedArr[static_cast<std::vector<int>::size_type>(size) / 2]) / 2.0;
-        //median = (sortedArr[size / 2 - 1] + sortedArr[size / 2]) / 2.0;
+        median = (sortedArr[size / 2 - 1] + sortedArr[size / 2]) / 2.0;
     } else {
-        median = sortedArr[static_cast<std::vector<int>::size_type>(size) / 2];
-        //median = sortedArr[size / 2];
+        median = sortedArr[size / 2];
     }
 
-    cout << "min: " << minVal << " (index: " << minIndex << ")\n";
-    cout << "max: " << maxVal << " (индекс: " << maxIndex << ")\n";
-    cout << "average: " << average << "\n";
-    cout << "median: " << median << "\n";
+    cout << "Min value: " << minVal << " at index " << minIdx << endl;
+    cout << "Max value: " << maxVal << " at index " << maxIdx << endl;
+    cout << "Average: " << avg << endl;
+    cout << "Median: " << median << endl;
 }
-
-// Функция для формирования среза массива
-
 /*
- * Формирование среза массива.
+ * Срез массива от индекса a до b
  *
  * @param arr указатель на массив.
  * @param size размер массива.
@@ -77,97 +126,102 @@ void findMinMax(int* arr, int size) {
  */
 void sliceArray(int* arr, int size, int a, int b) {
     if (a < 0 || b >= size || a > b) {
-        cout << "Incorrect indices.\n";
+        cout << "Invalid indices for slicing!" << endl;
         return;
     }
 
-    cout << "a slice of the array: ";
+    int newSize = b - a + 1;
+    int* slicedArray = new int[newSize];
+
     for (int i = a; i <= b; ++i) {
-        cout << arr[i] << " ";
+        slicedArray[i - a] = arr[i];
     }
-    cout << "\n";
+
+    cout << "Sliced array: ";
+    printArray(slicedArray, newSize);
+    
+    delete[] slicedArray; // Освобождение памяти
 }
-
-// Функция сортировки вставками
-
 /*
- * Сортировка массива методом вставок.
+ * Сортировка массива методом вставок
  *
- * @param arr указатель на массив, который нужно отсортировать.
+ * @param arr указатель на массив.
  * @param size размер массива.
  */
 void insertionSort(int* arr, int size) {
-    int* sortedArr = new int[size];
-    copy(arr, arr + size, sortedArr);
+    int* sortedArray = new int[size];
+    for (int i = 0; i < size; ++i) {
+        sortedArray[i] = arr[i];
+    }
 
     for (int i = 1; i < size; ++i) {
-        int key = sortedArr[i];
+        int key = sortedArray[i];
         int j = i - 1;
 
-        while (j >= 0 && sortedArr[j] > key) {
-            sortedArr[j + 1] = sortedArr[j];
+        while (j >= 0 && sortedArray[j] > key) {
+            sortedArray[j + 1] = sortedArray[j];
             j--;
         }
-        sortedArr[j + 1] = key;
+        sortedArray[j + 1] = key;
     }
 
     cout << "Sorted array: ";
-    for (int i = 0; i < size; ++i) {
-        cout << sortedArr[i] << " ";
-    }
-    cout << "\n";
-
-    delete[] sortedArr;
+    printArray(sortedArray, size);
+    
+    delete[] sortedArray; // Освобождение памяти
 }
 
-// Главная функция
 int main() {
     srand(static_cast<unsigned>(time(0))); // Инициализация генератора случайных чисел
 
     int N;
-    cout << "Enter the size of the array: ";
-    cin >> N;
+    std::cout << "Введите размер массива N: ";
+    std::cin >> N;
 
-    if (N <= 0) {
-        cout << "The size of an array must be greater than 0.\n";
-        return 1;
-    }
+    int* array = new int[N];
+    fillArray(array, N);
 
-    int* arr = new int[N];
-    fillArray(arr, N);
-
-    cout << "Generated array: ";
-    for (int i = 0; i < N; ++i) {
-        cout << arr[i] << " ";
-    }
-    cout << "\n";
+    cout << "Сгенерированный массив: ";
+    printArray(array, N);
 
     int choice;
-    cout << "Choose an option:\n";
-    cout << "1. Find min and max\n";
-    cout << "2. Slice\n";
-    cout << "3. Insertion sort\n";
-    cin >> choice;
+    do {
+        cout << "\nВыберите манипуляцию с массивом:\n";
+        cout << "1) Поиск последовательностей\n";
+        cout << "2) Поиск максимального и минимального значения\n";
+        cout << "3) Формирование среза массива\n";
+        cout << "4) Сортировка вставками\n";
+        cout << "5) Выход\n";
+        cin >> choice;
 
-    switch (choice) {
-        case 1:
-            findMinMax(arr, N);
-            break;
-        case 2: {
-            int a, b;
-            cout << "Enter the start and end indices (a<=b): ";
-            cin >> a >> b;
-            sliceArray(arr, N, a, b);
-            break;
+        switch (choice) {
+            case 1: {
+                string sequenceType;
+                cout << "Введите тип последовательности (ascending, descending, alternating): ";
+                cin >> sequenceType;
+                findSequences(array, N, sequenceType);
+                break;
+            }
+            case 2:
+                findMinMaxAvgMedian(array, N);
+                break;
+            case 3: {
+                int a, b;
+                cout << "Введите индексы a и b для среза массива: ";
+                cin >> a >> b;
+                sliceArray(array, N, a, b);
+                break;
+            }
+            case 4:
+                insertionSort(array, N);
+                break;
+            case 5:
+                break;
+            default:
+                cout << "Неверный выбор!" << endl;
         }
-        case 3:
-            insertionSort(arr, N);
-            break;
-        default:
-            cout << "Incorrect choice.\n";
-            break;
-    }
+    } while (choice != 5);
 
-    delete[] arr; // Освобождение памяти
+    delete[] array; // Освобождение памяти
     return 0;
 }
