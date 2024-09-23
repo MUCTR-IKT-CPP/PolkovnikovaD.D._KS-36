@@ -36,41 +36,40 @@ void printArray(const int* arr, int size) {
  * @param size размер массива.
  * @param type тип последовательности: "ascending"(возрастание), "descending"(убывание) или "alternating"(чередование).
  */
-void findSequences(int* arr, int size, const std::string& type) {
+void findSequences(int* arr, int size, int choice) {
     bool found = false;
+    for (int i = 0; i < size; i++){
+        int j = i;
+        if (choice == 1){
+            while (j < size - 1 && arr[j] < arr[j + 1]) 
+                j++;
+        }
+        else if (choice == 2){ 
+            while (j < size- 1 && arr[j] > arr[j + 1]) 
+                j++;
+        }
+        else if (choice == 3) 
+        {
+            bool increasing = arr[i] < arr[i + 1];
+            
+            while (j < size - 1 && ((increasing && arr[j] < arr[j + 1]) || (!increasing && arr[j] > arr[j + 1]))) {
+                j++;
+                increasing = !increasing;
+            }
+        }
+        
+        if (j - i >= 2) 
+        {
+            found = true;
 
-    if (type == "ascending") {
-        for (int i = 0; i < size - 2; ++i) {
-            if (arr[i] < arr[i + 1] && arr[i + 1] < arr[i + 2]) {
-                found = true;
-                cout << "Ascending sequence starting at index " << i << ": ";
-                for (int j = i; j < size && arr[j] < arr[j + 1]; ++j) {
-                    cout << arr[j] << " ";
-                }
-                cout << endl;
-            }
-        }
-    } else if (type == "descending") {
-        for (int i = 0; i < size - 2; ++i) {
-            if (arr[i] > arr[i + 1] && arr[i + 1] > arr[i + 2]) {
-                found = true;
-                cout << "Descending sequence starting at index " << i << ": ";
-                for (int j = i; j < size && arr[j] > arr[j + 1]; ++j) {
-                    cout << arr[j] << " ";
-                }
-                cout << endl;
-            }
-        }
-    } else if (type == "alternating") {
-        for (int i = 0; i < size - 2; ++i) {
-            if ((arr[i] > arr[i + 1] && arr[i + 1] < arr[i + 2]) || (arr[i] < arr[i + 1] && arr[i + 1] > arr[i + 2])) {
-                found = true;
-                std::cout << "Alternating sequence starting at index " << i << ": ";
-                for (int j = i; j < size - 1 && ((arr[j] > arr[j + 1] && arr[j + 1] < arr[j + 2]) || (arr[j] < arr[j + 1] && arr[j + 1] > arr[j + 2])); ++j) {
-                    cout << arr[j] << " ";
-                }
-                cout << endl;
-            }
+            cout << "\tПоследовательность от индекса " << i << " до " << j << ": ";
+
+            for (int k = i; k <= j; k++) 
+                cout << arr[k] << " ";
+
+            cout << endl;
+            
+            i = j;
         }
     }
 
@@ -196,10 +195,10 @@ int main() {
 
         switch (choice) {
             case 1: {
-                string sequenceType;
-                cout << "Введите тип последовательности (ascending, descending, alternating): ";
-                cin >> sequenceType;
-                findSequences(array, N, sequenceType);
+                int ch;
+                cout << "Введите тип последовательности (ascending (1), descending (2), alternating(3)): ";
+                cin >> ch;
+                findSequences(array, N, ch);
                 break;
             }
             case 2:
