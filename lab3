@@ -1,0 +1,156 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <map>
+#include <cmath>
+using namespace std;
+
+
+/*Требуется написать программу, в которой:
+
+Будет реализована структура "Банкнота" с полями:
+    Наименование
+    Номинал (из списка заданного перечислением 1, 5, 10, 20, 50, 100, 1000)
+    Курс к рублю
+1)Пользователь вводит число N.
+2)Создан массив, хранящий N банкнот, который будем называть кошельком, кол-во считывается с клавиатуры.
+3) Сгенерировано N банкнот различного нoминала и валюты.
+Написаны функции которые:
+Подсчитывают общую сумму в рублях хранимую в кошельке.
+Формирует срез банкнот с номиналом больше выбранного пользователем и выводит их количество разбивая их по валютам.
+Выводит состав кошелька отсортированный по валютам (по алфавиту) и номиналу с количеством каждой существующей банкноты.
+Конвертирует все банкноты в рубль через курс набирая итог банкнотами с максимальным номиналом, в случае неровной суммы округляем в большую сторону.*/
+
+#include <iostream>
+#include <vector>
+#include <string>
+#include <cstdlib> // Для rand() и srand()
+#include <ctime>   // Для time()
+
+// Перечисление номиналов банкнот
+enum Nominal {
+    ONE = 1,
+    FIVE = 5,
+    TEN = 10,
+    TWENTY = 20,
+    FIFTY = 50,
+    HUNDRED = 100,
+    THOUSAND = 1000
+};
+
+// Структура для представления банкноты
+struct Banknote {
+    string name; // Наименование
+    Nominal nominal;  // Номинал
+    double exchangeRate; // Курс к рублю
+
+    void display() const {
+        cout << "Банкнота: " << name 
+                  << ", Номинал: " << nominal 
+                  << ", Курс к рублю: " << exchangeRate << endl;
+    }
+};
+
+/**
+ * Генерация имени банкноты.
+ *
+ * @param index Индекс банкноты.
+ * @return Возвращает строку с именем банкноты.
+ */
+string generateName(int index) {
+    return "Банкнота_" + to_string(index + 1);
+}
+
+/**
+ * Генерация случайного номинала банкноты.
+ *
+ * @return Возвращает случайный номинал из перечисления Nominal.
+ */
+Nominal generateNominal() {
+    Nominal nominalValues[] = {ONE, FIVE, TEN, TWENTY, FIFTY, HUNDRED, THOUSAND};
+    int randIndex = rand() % (sizeof(nominalValues) / sizeof(nominalValues[0])); // Случайный индекс
+    return nominalValues[randIndex]; // Возвращаем случайный номинал
+}
+
+/**
+ * Генерация случайного курса к рублю.
+ *
+ * @return Возвращает случайное значение курса от 0.1 до 10.0.
+ */
+double generateExchangeRate() {
+    return (rand() % 100 + 1) / 10.0; // Генерируем курс от 0.1 до 10.0
+}
+
+/**
+ * Подсчет общей суммы в рублях в кошельке.
+ *
+ * @param wallet Вектор банкнот.
+ * @return Возвращает общую сумму в рублях.
+ */
+double calculateTotalValue(const std::vector<Banknote>& wallet) {
+    double total = 0.0;
+    for (const auto& note : wallet) {
+        total += note.nominal * note.exchangeRate;
+    }
+    return total;
+}
+
+/**
+ * Фильтрация банкнот по заданному порогу номинала.
+ *
+ * @param wallet Вектор банкнот.
+ * @param threshold Порог номинала для фильтрации.
+ * @return Возвращает карту с количеством и суммой банкнот, превышающих порог.
+ */
+map<string, pair<int, double>> filterByNominal(const vector<Banknote>& wallet, double threshold) {
+    map<string, pair<int, double>> filteredNotes;
+
+    for (const auto& note : wallet) {
+        if (note.nominal > threshold) {
+            filteredNotes[note.name].first++; // Увеличиваем количество банкнот
+            filteredNotes[note.name].second += note.nominal * note.exchangeRate; // Сумма в рублях
+        }
+    }
+    return filteredNotes;
+}
+
+
+int main() {
+    srand(static_cast<unsigned int>(time(0))); // Инициализация генератора случайных чисел
+
+    int N;
+    cout << "Введите количество банкнот: ";
+    cin >> N;
+
+    vector<Banknote> wallet(N);
+
+    // Генерация банкнот
+    for (int i = 0; i < N; ++i) {
+        wallet[i].name = generateName(i);
+        wallet[i].nominal = generateNominal();
+        wallet[i].exchangeRate = generateExchangeRate();
+    }
+
+    // Вывод информации о банкнотах
+    cout << "Содержимое кошелька:" << endl;
+    for (const auto& note : wallet) {
+        note.display();
+    }
+    // Подсчет общей суммы в рублях
+    double totalValue = calculateTotalValue(wallet);
+    cout << "Общая сумма в рублях: " << totalValue << endl;
+
+    // Фильтрация банкнот по номиналу
+    double threshold;
+    cout << "Введите порог номинала для фильтрации: ";
+    cin >> threshold;
+    auto filteredNotes = filterByNominal(wallet, threshold);
+
+    cout << "Количество банкнот с номиналом больше " << threshold << ":" << endl;
+    for (const auto& entry : filteredNotes) {
+        cout << entry.first << ": " << entry.second.first 
+                  << " шт., Сумма в рублях: " << entry.second.second << endl;
+    }
+    return 0;
+}
+
