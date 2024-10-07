@@ -3,7 +3,6 @@
 #include <vector>
 #include <cstdlib>
 #include <ctime>
-#include <memory>
 
 enum class Rarity {
     Common,
@@ -13,17 +12,12 @@ enum class Rarity {
     Legendary
 };
 
-class Weapon {
-protected:
+struct Weapon {
+    std::string type;
     int damage;
     int durability;
     double attackSpeed; // Время на 1 атаку
     Rarity rarity;
-
-public:
-    Weapon(Rarity rarity) : rarity(rarity) {
-        setAttributes();
-    }
 
     void setAttributes() {
         switch (rarity) {
@@ -55,50 +49,17 @@ public:
         }
     }
 
-    virtual std::string getType() const = 0;
-
     void display() const {
-        std::cout << "Type: " << getType() << ", Damage: " << damage
+        std::cout << "Type: " << type << ", Damage: " << damage
                   << ", Durability: " << durability
                   << ", Attack Speed: " << attackSpeed
                   << ", Rarity: " << static_cast<int>(rarity) << std::endl;
-    }
-
-    Rarity getRarity() const {
-        return rarity;
-    }
-};
-
-class Spear : public Weapon {
-public:
-    Spear(Rarity rarity) : Weapon(rarity) {}
-    
-    std::string getType() const override {
-        return "Spear";
-    }
-};
-
-class Sword : public Weapon {
-public:
-    Sword(Rarity rarity) : Weapon(rarity) {}
-    
-    std::string getType() const override {
-        return "Sword";
-    }
-};
-
-class Bow : public Weapon {
-public:
-    Bow(Rarity rarity) : Weapon(rarity) {}
-    
-    std::string getType() const override {
-        return "Bow";
     }
 };
 
 class Shop {
 private:
-    std::vector<std::unique_ptr<Weapon>> weapons;
+    std::vector<Weapon> weapons;
 
 public:
     Shop() {
@@ -107,9 +68,17 @@ public:
 
     void populateShop() {
         for (int i = 0; i < 2; ++i) {
-            weapons.push_back(std::make_unique<Spear>(static_cast<Rarity>(rand() % 5)));
-            weapons.push_back(std::make_unique<Sword>(static_cast<Rarity>(rand() % 5)));
-            weapons.push_back(std::make_unique<Bow>(static_cast<Rarity>(rand() % 5)));
+            Weapon spear = {"Spear", 0, 0, 0.0, static_cast<Rarity>(rand() % 5)};
+            spear.setAttributes();
+            weapons.push_back(spear);
+
+            Weapon sword = {"Sword", 0, 0, 0.0, static_cast<Rarity>(rand() % 5)};
+            sword.setAttributes();
+            weapons.push_back(sword);
+
+            Weapon bow = {"Bow", 0, 0, 0.0, static_cast<Rarity>(rand() % 5)};
+            bow.setAttributes();
+            weapons.push_back(bow);
         }
     }
 
@@ -125,8 +94,8 @@ public:
 
         std::cout << "Available weapons:\n";
         for (const auto& weapon : weapons) {
-            if (static_cast<int>(weapon->getRarity()) <= budget) {
-                weapon->display();
+            if (static_cast<int>(weapon.rarity) <= budget) {
+                weapon.display();
             }
         }
 
@@ -135,9 +104,9 @@ public:
         std::cin >> weaponType;
 
         for (const auto& weapon : weapons) {
-            if (weapon->getType() == weaponType) {
+            if (weapon.type == weaponType) {
                 std::cout << "Demonstrating " << weaponType << ":\n";
-                weapon->display();
+                weapon.display();
                 break;
             }
         }
