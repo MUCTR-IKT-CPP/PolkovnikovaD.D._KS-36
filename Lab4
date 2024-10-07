@@ -1,0 +1,154 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <cstdlib>
+#include <ctime>
+#include <memory>
+
+enum class Rarity {
+    Common,
+    Uncommon,
+    Rare,
+    Epic,
+    Legendary
+};
+
+class Weapon {
+protected:
+    int damage;
+    int durability;
+    double attackSpeed; // Время на 1 атаку
+    Rarity rarity;
+
+public:
+    Weapon(Rarity rarity) : rarity(rarity) {
+        setAttributes();
+    }
+
+    void setAttributes() {
+        switch (rarity) {
+            case Rarity::Common:
+                damage = rand() % 10 + 1; // Урон от 1 до 10
+                durability = rand() % 20 + 10; // Прочность от 10 до 30
+                attackSpeed = static_cast<double>(rand() % 5 + 1) / 10.0; // 0.1 до 0.5
+                break;
+            case Rarity::Uncommon:
+                damage = rand() % 10 + 5; // Урон от 5 до 15
+                durability = rand() % 30 + 20; // Прочность от 20 до 50
+                attackSpeed = static_cast<double>(rand() % 4 + 1) / 10.0; // 0.1 до 0.4
+                break;
+            case Rarity::Rare:
+                damage = rand() % 10 + 10; // Урон от 10 до 20
+                durability = rand() % 40 + 30; // Прочность от 30 до 70
+                attackSpeed = static_cast<double>(rand() % 3 + 1) / 10.0; // 0.1 до 0.3
+                break;
+            case Rarity::Epic:
+                damage = rand() % 10 + 15; // Урон от 15 до 25
+                durability = rand() % 50 + 40; // Прочность от 40 до 90
+                attackSpeed = static_cast<double>(rand() % 2 + 1) / 10.0; // 0.1 до 0.2
+                break;
+            case Rarity::Legendary:
+                damage = rand() % 10 + 20; // Урон от 20 до 30
+                durability = rand() % 100 + 70; // Прочность от 70 до 170
+                attackSpeed = 0.1; // Максимальная скорость атаки
+                break;
+        }
+    }
+
+    virtual std::string getType() const = 0;
+
+    void display() const {
+        std::cout << "Type: " << getType() << ", Damage: " << damage
+                  << ", Durability: " << durability
+                  << ", Attack Speed: " << attackSpeed
+                  << ", Rarity: " << static_cast<int>(rarity) << std::endl;
+    }
+
+    Rarity getRarity() const {
+        return rarity;
+    }
+};
+
+class Spear : public Weapon {
+public:
+    Spear(Rarity rarity) : Weapon(rarity) {}
+    
+    std::string getType() const override {
+        return "Spear";
+    }
+};
+
+class Sword : public Weapon {
+public:
+    Sword(Rarity rarity) : Weapon(rarity) {}
+    
+    std::string getType() const override {
+        return "Sword";
+    }
+};
+
+class Bow : public Weapon {
+public:
+    Bow(Rarity rarity) : Weapon(rarity) {}
+    
+    std::string getType() const override {
+        return "Bow";
+    }
+};
+
+class Shop {
+private:
+    std::vector<std::unique_ptr<Weapon>> weapons;
+
+public:
+    Shop() {
+        populateShop();
+    }
+
+    void populateShop() {
+        for (int i = 0; i < 2; ++i) {
+            weapons.push_back(std::make_unique<Spear>(static_cast<Rarity>(rand() % 5)));
+            weapons.push_back(std::make_unique<Sword>(static_cast<Rarity>(rand() % 5)));
+            weapons.push_back(std::make_unique<Bow>(static_cast<Rarity>(rand() % 5)));
+        }
+    }
+
+    void visit() {
+        std::cout << "Welcome to the Weapon Shop!\n";
+        std::cout << "What type of weapon are you looking for? (1: Spear, 2: Sword, 3: Bow): ";
+        int choice;
+        std::cin >> choice;
+
+        std::cout << "What is your budget? (0: Common, 1: Uncommon, 2: Rare, 3: Epic, 4: Legendary): ";
+        int budget;
+        std::cin >> budget;
+
+        std::cout << "Available weapons:\n";
+        for (const auto& weapon : weapons) {
+            if (static_cast<int>(weapon->getRarity()) <= budget) {
+                weapon->display();
+            }
+        }
+
+        std::cout << "Please choose a weapon by entering its type (Spear, Sword, Bow): ";
+        std::string weaponType;
+        std::cin >> weaponType;
+
+        for (const auto& weapon : weapons) {
+            if (weapon->getType() == weaponType) {
+                std::cout << "Demonstrating " << weaponType << ":\n";
+                weapon->display();
+                break;
+            }
+        }
+    }
+};
+
+int main() {
+    std::srand(static_cast<unsigned>(std::time(0)));
+
+    Shop shop;
+    shop.visit();
+
+    return 0;
+}
