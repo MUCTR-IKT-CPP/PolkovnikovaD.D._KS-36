@@ -4,6 +4,9 @@
 #include <cstdlib>
 #include <ctime>
 
+/*
+ * Перечисление для обозначения редкости оружия.
+ */
 enum class Rarity {
     Common,
     Uncommon,
@@ -12,6 +15,9 @@ enum class Rarity {
     Legendary
 };
 
+/*
+ * Структура для представления оружия.
+ */
 struct Weapon {
     std::string type;
     int damage;
@@ -19,6 +25,9 @@ struct Weapon {
     double attackSpeed; // Время на 1 атаку
     Rarity rarity;
 
+    /*
+     * Устанавливает атрибуты оружия в зависимости от его редкости.
+     */
     void setAttributes() {
         switch (rarity) {
             case Rarity::Common:
@@ -49,6 +58,9 @@ struct Weapon {
         }
     }
 
+    /*
+     * Отображает информацию об оружии.
+     */
     void display() const {
         std::cout << "Type: " << type << ", Damage: " << damage
                   << ", Durability: " << durability
@@ -57,15 +69,24 @@ struct Weapon {
     }
 };
 
+/*
+ * Класс для представления магазина оружия.
+ */
 class Shop {
 private:
     std::vector<Weapon> weapons;
 
 public:
+    /*
+     * Конструктор магазина, который заполняет его оружием.
+     */
     Shop() {
         populateShop();
     }
 
+    /*
+     * Заполняет магазин оружием с случайными атрибутами.
+     */
     void populateShop() {
         for (int i = 0; i < 2; ++i) {
             Weapon spear = {"Spear", 0, 0, 0.0, static_cast<Rarity>(rand() % 5)};
@@ -82,6 +103,9 @@ public:
         }
     }
 
+    /*
+     * Посетить магазин и взаимодействовать с пользователем.
+     */
     void visit() {
         std::cout << "Welcome to the Weapon Shop!\n";
         std::cout << "What type of weapon are you looking for? (1: Spear, 2: Sword, 3: Bow): ";
@@ -113,6 +137,9 @@ public:
     }
 };
 
+/*
+ * Главная функция программы.
+ */
 int main() {
     std::srand(static_cast<unsigned>(std::time(0)));
 
