@@ -3,37 +3,9 @@
 #include <vector>
 #include <memory>
 #include <ctime> // Добавлено для time
+#include <cstdlib> // Для rand() и srand()
 using namespace std;
 
-/*
-Задание 5. Вариант 3.
-1) Создайте класс Животное, со свойствами: 
-        имя, 
-        возраст, 
-        сытость (от 0 до 100), 
-        усталость и 
-        методом 
-            играть, 
-            спать, 
-            есть
-            проверками на необходимость спать и есть.
-2) Создайте класс 
-    Кот,
-    Собака,
-    Вомбат, 
-    Крыса, 
-    каждый из которых будет обладать собственным 
-        способом взаимодействия, 
-        длительностью сна
-        циклами питания.
-3) Создайте класс Контактный зоопарк, который будет хранить в себе массив животных.
-4)Создайте метод проведения осмотра зоопарка сотрудником, 
-    в процессе которого животные которым требуется отдых отправляются отдыхать, 
-    животные, которым требуется еда, кормятся.
-*/
-
-/*Заметка от Крашенникова: Звери уставшие, 
-голодные или поспали --> как метод работает и какой преподносится, чтобы им помочь */
 class Animal {
 protected:
     string name;
@@ -43,29 +15,76 @@ protected:
     bool condition = false;
 
 public:
+    /*
+     * Конструктор класса Animal
+     *
+     * @param name имя животного.
+     * @param age возраст животного.
+     */
     Animal(string name, int age) : name(name), age(age), hunger(0), tiredness(0) {}
 
-    // virtual void play(unique_ptr<Animal>, double intensity) = 0;
-    virtual void play() = 0;
+    /*
+     * Виртуальная функция для игры с животным.
+     *
+     * @param intensity интенсивность игры.
+     */
+    virtual void play(double intensity) = 0;
+
+    /*
+     * Виртуальная функция для сна животного.
+     */
     virtual void sleep() = 0;
+
+    /*
+     * Виртуальная функция для кормления животного.
+     */
     virtual void eat() = 0;
+    
+    /*
+     * Устанавливает состояние животного.
+     *
+     * @param cond новое состояние животного.
+     */
     void setCondition(bool cond) {
         condition = cond;
     }
+    
+    /*
+     * Проверяет, в порядке ли животное.
+     *
+     * @return true, если животное в порядке, иначе false.
+     */
     bool isALright() const {
         return condition;
     }
+
+    /*
+     * Проверяет, нуждается ли животное в еде.
+     *
+     * @return true, если животное голодно, иначе false.
+     */
     bool needsFood() const {
         return hunger >= 80; // Если сытость >= 80, животное голодно
     }
 
+    /*
+     * Проверяет, нуждается ли животное в отдыхе.
+     *
+     * @return true, если животное устало, иначе false.
+     */
     bool needsRest() const {
         return tiredness >= 80; // Если усталость >= 80, животное устало
     }
 
+    /*
+     * Перегрузка оператора вывода для класса Animal.
+     *
+     * @param os поток вывода.
+     * @param animal объект животного.
+     * @return ссылку на поток вывода.
+     */
     friend ostream& operator<<(ostream& os, const Animal& animal) { 
-        // выводит класс с приставкой от компилятора
-        os << "<" << typeid(animal).name() << ">"<<" {Name: " << animal.name << ", Age: " << animal.age
+        os << "<" << typeid(animal).name() << ">" << " {Name: " << animal.name << ", Age: " << animal.age
            << ", Hunger: " << animal.hunger << ", Tiredness: " << animal.tiredness << "}";
         return os;
     }
@@ -73,19 +92,36 @@ public:
 
 class Cat : public Animal {
 public:
+    /*
+     * Конструктор класса Cat.
+     *
+     * @param name имя кошки.
+     * @param age возраст кошки.
+     */
     Cat(string name, int age) : Animal(name, age) {}
 
-    void play() override {
+    /*
+     * Реализация игры для кошки.
+     *
+     * @param intensity интенсивность игры.
+     */
+    void play(double intensity) override {
         cout << name << " the Cat is playing!\n";
-        tiredness += 80; // Усталость увеличивается
-        hunger += 10;    // Сытость уменьшается        
+        tiredness += static_cast<int>(80 * intensity); // Усталость увеличивается
+        hunger += static_cast<int>(10 * intensity);    // Сытость уменьшается        
     }
 
+    /*
+     * Реализация сна для кошки.
+     */
     void sleep() override {
         cout << name << " the Cat is sleeping for 8 hours.\n";
         tiredness = 0; // Усталость восстанавливается
     }
 
+    /*
+     * Реализация кормления для кошки.
+     */
     void eat() override {
         cout << name << " the Cat is eating.\n";
         hunger = max(0, hunger - 30); // Сытость восстанавливается
@@ -94,19 +130,36 @@ public:
 
 class Dog : public Animal {
 public:
+    /*
+     * Конструктор класса Dog.
+     *
+     * @param name имя собаки.
+     * @param age возраст собаки.
+     */
     Dog(string name, int age) : Animal(name, age) {}
 
-    void play() override {
+    /*
+     * Реализация игры для собаки.
+     *
+     * @param intensity интенсивность игры.
+     */
+    void play(double intensity) override {
         cout << name << " the Dog is playing!\n";
-        tiredness += 15; // Усталость увеличивается
-        hunger += 89;    // Сытость уменьшается
+        tiredness += static_cast<int>(15 * intensity); // Усталость увеличивается
+        hunger += static_cast<int>(89 * intensity);    // Сытость уменьшается
     }
 
+    /*
+     * Реализация сна для собаки.
+     */
     void sleep() override {
         cout << name << " the Dog is sleeping for 6 hours.\n";
         tiredness = 0; // Усталость восстанавливается
     }
 
+    /*
+     * Реализация кормления для собаки.
+     */
     void eat() override {
         cout << name << " the Dog is eating.\n";
         hunger = max(0, hunger - 40); // Сытость восстанавливается
@@ -115,19 +168,36 @@ public:
 
 class Wombat : public Animal {
 public:
+    /*
+     * Конструктор класса Wombat.
+     *
+     * @param name имя вомбата.
+     * @param age возраст вомбата.
+     */
     Wombat(string name, int age) : Animal(name, age) {}
 
-    void play() override {
+    /*
+     * Реализация игры для вомбата.
+     *
+     * @param intensity интенсивность игры.
+     */
+    void play(double intensity) override {
         cout << name << " the Wombat is playing!\n";
-        tiredness += 25; // Усталость увеличивается
-        hunger += 15;    // Сытость уменьшается
+        tiredness += static_cast<int>(25 * intensity); // Усталость увеличивается
+        hunger += static_cast<int>(15 * intensity);    // Сытость уменьшается
     }
 
+    /*
+     * Реализация сна для вомбата.
+     */
     void sleep() override {
         cout << name << " the Wombat is sleeping for 10 hours.\n";
         tiredness = 0; // Усталость восстанавливается
     }
 
+    /*
+     * Реализация кормления для вомбата.
+     */
     void eat() override {
         cout << name << " the Wombat is eating.\n";
         hunger = max(0, hunger - 20); // Сытость восстанавливается
@@ -136,34 +206,61 @@ public:
 
 class Rat : public Animal {
 public:
+    /*
+     * Конструктор класса Rat.
+     *
+     * @param name имя крысы.
+     * @param age возраст крысы.
+     */
     Rat(string name, int age) : Animal(name, age) {}
 
-    void play() override {
+    /*
+     * Реализация игры для крысы.
+     *
+     * @param intensity интенсивность игры.
+     */
+    void play(double intensity) override {
         cout << name << " the Rat is playing!\n";
-        tiredness += 90; // Усталость увеличивается
-        hunger += 90;     // Сытость уменьшается        
+        tiredness += static_cast<int>(90 * intensity); // Усталость увеличивается
+        hunger += static_cast<int>(90 * intensity);     // Сытость уменьшается        
     }
 
+    /*
+     * Реализация сна для крысы.
+     */
     void sleep() override {
         cout << name << " the Rat is sleeping for 4 hours.\n";
         tiredness = 0; // Усталость восстанавливается
     }
 
+    /*
+     * Реализация кормления для крысы.
+     */
     void eat() override {
         cout << name << " the Rat is eating.\n";
-        hunger = max(0, hunger - 10); // Сытость восстанавливается
-        
+        hunger = max(0, hunger - 10); // Сытость восстанавливается        
     }
 };
 
 class Zoo {
-public:
+private:
     vector<unique_ptr<Animal>> animals;
 
 public:
+    /*
+     * Добавляет животное в зоопарк.
+     *
+     * @param animal уникальный указатель на объект животного.
+     */
     void addAnimal(unique_ptr<Animal> animal) {
         animals.push_back(move(animal));
     }
+
+    /*
+     * Проверяет, все ли животные в порядке.
+     *
+     * @return true, если все животные в порядке, иначе false.
+     */
     bool animalsAllRight() const {
         for (auto& animal : animals) {
             if (!animal->isALright()) {
@@ -172,10 +269,14 @@ public:
         }
         return true;
     }
+
+    /*
+     * Проводит инспекцию зоопарка.
+     */
     void inspect() {
         cout << "Inspecting the zoo...\n";
         for (auto& animal : animals) {
-            if (animal->needsRest()) { // стрелка вызывает метод у объекта через указатель
+            if (animal->needsRest()) {
                 animal->sleep();
             } else if (animal->needsFood()) {
                 animal->eat();
@@ -184,6 +285,33 @@ public:
             if (!animal->needsFood() && !animal->needsRest()) {
                 animal->setCondition(true);
             }
+        }
+    }
+
+    /*
+     * Симулирует день в зоопарке.
+     */
+    void simulateDay() {
+        for (int hour = 0; hour < 16; ++hour) {
+            float visitorIntensity = static_cast<float>(rand()) / RAND_MAX; // Интенсивность от 0 до 1
+            cout << "Hour " << hour + 1 << ": Visitor intensity: " << visitorIntensity << endl;
+
+            for (auto& animal : animals) {
+                if (!animal->needsFood() && !animal->needsRest()) {
+                    // Игры с другими животными
+                    if (rand() % 2 == 0) {
+                        animal->play(visitorIntensity);
+                    } else {
+                        // Игры с посетителем
+                        if (visitorIntensity > 0.5) {
+                            animal->play(visitorIntensity);
+                        }
+                    }
+                }
+            }
+
+            inspect();
+            cout << "------" << endl; // Разделитель для итераций
         }
     }
 };
@@ -196,14 +324,12 @@ int main() {
     zoo.addAnimal(make_unique<Dog>("Rex", 3));
     zoo.addAnimal(make_unique<Wombat>("Wally", 1));
     zoo.addAnimal(make_unique<Rat>("Remy", 1));
-    for (auto& animal : zoo.animals) {
-        animal->play();
-        // Проведение осмотра зоопарка
-        
+
+    // Симуляция работы зоопарка в течение 30 дней
+    for (int day = 0; day < 30; ++day) {
+        cout << "Day " << day + 1 << " in the zoo:\n";
+        zoo.simulateDay();
     }
-    do {
-    zoo.inspect();
-        cout << "------" << endl; // Разделитель для итераций
-    } while(!zoo.animalsAllRight());
+
     return 0;
 }
