@@ -2,22 +2,59 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include <ctime> // Добавлено для std::time
+#include <ctime> // Добавлено для time
+using namespace std;
 
+/*
+Задание 5. Вариант 3.
+1) Создайте класс Животное, со свойствами: 
+        имя, 
+        возраст, 
+        сытость (от 0 до 100), 
+        усталость и 
+        методом 
+            играть, 
+            спать, 
+            есть
+            проверками на необходимость спать и есть.
+2) Создайте класс 
+    Кот,
+    Собака,
+    Вомбат, 
+    Крыса, 
+    каждый из которых будет обладать собственным 
+        способом взаимодействия, 
+        длительностью сна
+        циклами питания.
+3) Создайте класс Контактный зоопарк, который будет хранить в себе массив животных.
+4)Создайте метод проведения осмотра зоопарка сотрудником, 
+    в процессе которого животные которым требуется отдых отправляются отдыхать, 
+    животные, которым требуется еда, кормятся.
+*/
+
+/*Заметка от Крашенникова: Звери уставшие, 
+голодные или поспали --> как метод работает и какой преподносится, чтобы им помочь */
 class Animal {
 protected:
-    std::string name;
+    string name;
     int age;
     int hunger;    // от 0 до 100
     int tiredness; // от 0 до 100
+    bool condition = false;
 
 public:
-    Animal(std::string name, int age) : name(name), age(age), hunger(0), tiredness(0) {}
+    Animal(string name, int age) : name(name), age(age), hunger(0), tiredness(0) {}
 
+    // virtual void play(unique_ptr<Animal>, double intensity) = 0;
     virtual void play() = 0;
     virtual void sleep() = 0;
     virtual void eat() = 0;
-
+    void setCondition(bool cond) {
+        condition = cond;
+    }
+    bool isALright() const {
+        return condition;
+    }
     bool needsFood() const {
         return hunger >= 80; // Если сытость >= 80, животное голодно
     }
@@ -26,8 +63,9 @@ public:
         return tiredness >= 80; // Если усталость >= 80, животное устало
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const Animal& animal) {
-        os << "<Animal> {Name: " << animal.name << ", Age: " << animal.age
+    friend ostream& operator<<(ostream& os, const Animal& animal) { 
+        // выводит класс с приставкой от компилятора
+        os << "<" << typeid(animal).name() << ">"<<" {Name: " << animal.name << ", Age: " << animal.age
            << ", Hunger: " << animal.hunger << ", Tiredness: " << animal.tiredness << "}";
         return os;
     }
@@ -35,154 +73,137 @@ public:
 
 class Cat : public Animal {
 public:
-    Cat(std::string name, int age) : Animal(name, age) {}
+    Cat(string name, int age) : Animal(name, age) {}
 
     void play() override {
-        std::cout << name << " the Cat is playing!\n";
-        tiredness += 20; // Усталость увеличивается
-        hunger += 10;    // Сытость уменьшается
+        cout << name << " the Cat is playing!\n";
+        tiredness += 80; // Усталость увеличивается
+        hunger += 10;    // Сытость уменьшается        
     }
 
     void sleep() override {
-        std::cout << name << " the Cat is sleeping for 8 hours.\n";
+        cout << name << " the Cat is sleeping for 8 hours.\n";
         tiredness = 0; // Усталость восстанавливается
     }
 
     void eat() override {
-        std::cout << name << " the Cat is eating.\n";
-        hunger = std::max(0, hunger - 30); // Сытость восстанавливается
-    }
-
-    friend std::ostream& operator<<(std::ostream& os, const Cat& cat) {
-        os << "<Cat> {Name: " << cat.name << ", Age: " << cat.age
-           << ", Hunger: " << cat.hunger << ", Tiredness: " << cat.tiredness << "}";
-        return os;
+        cout << name << " the Cat is eating.\n";
+        hunger = max(0, hunger - 30); // Сытость восстанавливается
     }
 };
 
 class Dog : public Animal {
 public:
-    Dog(std::string name, int age) : Animal(name, age) {}
+    Dog(string name, int age) : Animal(name, age) {}
 
     void play() override {
-        std::cout << name << " the Dog is playing!\n";
+        cout << name << " the Dog is playing!\n";
         tiredness += 15; // Усталость увеличивается
-        hunger += 20;    // Сытость уменьшается
+        hunger += 89;    // Сытость уменьшается
     }
 
     void sleep() override {
-        std::cout << name << " the Dog is sleeping for 6 hours.\n";
+        cout << name << " the Dog is sleeping for 6 hours.\n";
         tiredness = 0; // Усталость восстанавливается
     }
 
     void eat() override {
-        std::cout << name << " the Dog is eating.\n";
-        hunger = std::max(0, hunger - 40); // Сытость восстанавливается
-    }
-
-    friend std::ostream& operator<<(std::ostream& os, const Dog& dog) {
-        os << "<Dog> {Name: " << dog.name << ", Age: " << dog.age
-           << ", Hunger: " << dog.hunger << ", Tiredness: " << dog.tiredness << "}";
-        return os;
+        cout << name << " the Dog is eating.\n";
+        hunger = max(0, hunger - 40); // Сытость восстанавливается
     }
 };
 
 class Wombat : public Animal {
 public:
-    Wombat(std::string name, int age) : Animal(name, age) {}
+    Wombat(string name, int age) : Animal(name, age) {}
 
     void play() override {
-        std::cout << name << " the Wombat is playing!\n";
+        cout << name << " the Wombat is playing!\n";
         tiredness += 25; // Усталость увеличивается
         hunger += 15;    // Сытость уменьшается
     }
 
     void sleep() override {
-        std::cout << name << " the Wombat is sleeping for 10 hours.\n";
+        cout << name << " the Wombat is sleeping for 10 hours.\n";
         tiredness = 0; // Усталость восстанавливается
     }
 
     void eat() override {
-        std::cout << name << " the Wombat is eating.\n";
-        hunger = std::max(0, hunger - 20); // Сытость восстанавливается
-    }
-
-    friend std::ostream& operator<<(std::ostream& os, const Wombat& wombat) {
-        os << "<Wombat> {Name: " << wombat.name << ", Age: " << wombat.age
-           << ", Hunger: " << wombat.hunger << ", Tiredness: " << wombat.tiredness << "}";
-        return os;
+        cout << name << " the Wombat is eating.\n";
+        hunger = max(0, hunger - 20); // Сытость восстанавливается
     }
 };
 
 class Rat : public Animal {
 public:
-    Rat(std::string name, int age) : Animal(name, age) {}
+    Rat(string name, int age) : Animal(name, age) {}
 
     void play() override {
-        std::cout << name << " the Rat is playing!\n";
-        tiredness += 10; // Усталость увеличивается
-        hunger += 5;     // Сытость уменьшается
+        cout << name << " the Rat is playing!\n";
+        tiredness += 90; // Усталость увеличивается
+        hunger += 90;     // Сытость уменьшается        
     }
 
     void sleep() override {
-        std::cout << name << " the Rat is sleeping for 4 hours.\n";
+        cout << name << " the Rat is sleeping for 4 hours.\n";
         tiredness = 0; // Усталость восстанавливается
     }
 
     void eat() override {
-        std::cout << name << " the Rat is eating.\n";
-        hunger = std::max(0, hunger - 10); // Сытость восстанавливается
-    }
-
-    friend std::ostream& operator<<(std::ostream& os, const Rat& rat) {
-        os << "<Rat> {Name: " << rat.name << ", Age: " << rat.age
-           << ", Hunger: " << rat.hunger << ", Tiredness: " << rat.tiredness << "}";
-        return os;
+        cout << name << " the Rat is eating.\n";
+        hunger = max(0, hunger - 10); // Сытость восстанавливается
+        
     }
 };
 
 class Zoo {
 public:
-    std::vector<std::unique_ptr<Animal>> animals;
+    vector<unique_ptr<Animal>> animals;
 
 public:
-    void addAnimal(std::unique_ptr<Animal> animal) {
-        animals.push_back(std::move(animal));
+    void addAnimal(unique_ptr<Animal> animal) {
+        animals.push_back(move(animal));
     }
-
-    void inspect() {
-        std::cout << "Inspecting the zoo...\n";
+    bool animalsAllRight() const {
         for (auto& animal : animals) {
-            if (animal->needsRest()) {
+            if (!animal->isALright()) {
+                return false;
+            }
+        }
+        return true;
+    }
+    void inspect() {
+        cout << "Inspecting the zoo...\n";
+        for (auto& animal : animals) {
+            if (animal->needsRest()) { // стрелка вызывает метод у объекта через указатель
                 animal->sleep();
             } else if (animal->needsFood()) {
                 animal->eat();
             }
-            std::cout << *animal << std::endl; // Вывод информации о животном
+            cout << *animal << endl; // Вывод информации о конкретном животном через указатель
+            if (!animal->needsFood() && !animal->needsRest()) {
+                animal->setCondition(true);
+            }
         }
     }
 };
 
 int main() {
-    std::srand(static_cast<unsigned>(std::time(0)));
+    srand(static_cast<unsigned>(time(0)));
 
     Zoo zoo;
-    zoo.addAnimal(std::make_unique<Cat>("Whiskers", 2));
-    zoo.addAnimal(std::make_unique<Dog>("Rex", 3));
-    zoo.addAnimal(std::make_unique<Wombat>("Wally", 1));
-    zoo.addAnimal(std::make_unique<Rat>("Remy", 1));
-
-    // Цикл для повторного взаимодействия
-    for (int i = 0; i < 3; ++i) { // Поменяйте число на нужное количество итераций
-        // Животные играют
-        for (auto& animal : zoo.animals) {
-            animal->play();
-        }
-
+    zoo.addAnimal(make_unique<Cat>("Whiskers", 2));
+    zoo.addAnimal(make_unique<Dog>("Rex", 3));
+    zoo.addAnimal(make_unique<Wombat>("Wally", 1));
+    zoo.addAnimal(make_unique<Rat>("Remy", 1));
+    for (auto& animal : zoo.animals) {
+        animal->play();
         // Проведение осмотра зоопарка
-        zoo.inspect();
-        std::cout << "------" << std::endl; // Разделитель для итераций
+        
     }
-
+    do {
+    zoo.inspect();
+        cout << "------" << endl; // Разделитель для итераций
+    } while(!zoo.animalsAllRight());
     return 0;
 }
