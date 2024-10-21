@@ -35,359 +35,246 @@
 */
 #include <iostream>
 #include <string>
-#include <limits>
 #include <vector>
-#include <stdexcept>
+#include <memory>
+
 using namespace std;
 
-/*
- * Интерфейсный класс для считывания данных.
- */
-class InputReader {
+// Интерфейсный класс для считывания данных.
+class Reader {
 public:
-    /*
-     * Считывание с потока ввода >>
-     *
-     * @param is Поток ввода.
-     * @return Возвращает true, если чтение прошло успешно, иначе false.
-     */
-    virtual bool read(istream& is) = 0;
-    virtual ~InputReader() = default;   // Деструктор для интерфейсного класса. Здесь можно освободить ресурсы
-    // Важно для предотвращения утечек памяти
+    virtual void read(istream& in) = 0;
+    virtual ~Reader() = default; // Деструктор
+    friend ostream& operator<<(ostream& os, const Reader& r) {
+        r.print(os); // Вызов метода для вывода информации
+        return os;
+    }
+protected:
+    virtual void print(ostream& os) const = 0; // Виртуальный метод для печати
 };
 
-/*
- * Интерфейсный класс валидатора с одним методом: 
- * проверкой считанной считанного значения (принимает в себя значение)
- */
+// Интерфейсный класс валидатора.
 class Validator {
 public:
-    /*
-     * Проверяет считанное значение на соответствие правилам.
-     *
-     * @param value Проверяемое значение.
-     * @return Возвращает true, если значение валидно, иначе false.
-     */
     virtual bool validate(const string& value) = 0;
-    virtual ~Validator() = default;
+    virtual ~Validator() = default; // Деструктор
 };
 
-/*
- * Считыватель для целых чисел.
- */
-class IntReader : public InputReader {
+// Считыватель для целых чисел.
+class IntReader : public Reader {
 private:
-    int value;  // Значение, считанное из ввода.
+    int& value; // Ссылка на значение
+    vector<unique_ptr<Validator>> validators; // Валидаторы
 
 public:
-    /*
-     * Читает целое число из потока.
-     *
-     * @param is Поток ввода.
-     * @return Возвращает true, если чтение прошло успешно, иначе false.
-     */
-    bool read(istream& is) override {
+    IntReader(int& value) : value(value) {}
+
+    void addValidator(Validator* validator) {
+        validators.emplace_back(validator);
+    }
+
+    void read(istream& in) override {
         string input;
         while (true) {
-            cout << "Введите целое число (или Ctrl+D для выхода): ";
-            if (!getline(is, input) || input.empty()) return false;    // Проверка данных из потока
+            cout << "Введите значение с типом int: ";
+            if (!getline(in, input) || input.empty()) return;
 
             try {
-                value = stoi(input);                                   // Попытка преобразования в целое число
-                return true;
-            } catch (...) {                                                 // Перехват всех исключений
-                cerr << "Неверный формат. Попробуйте снова." << endl; // Вывод сообщения об ошибке. Не буферизуется -> выводятся немедленно.
+                value = stoi(input);
+                bool valid = true;
+
+                // Проверка валидаторов
+                for (const auto& validator : validators) {
+                    if (!validator->validate(input)) {
+                        cerr << "Значение не соответствует требованиям! Повторите ввод." << endl;
+                        valid = false;
+                        break;
+                    }
+                }
+
+                if (valid) {
+                    return; // Успешное считывание
+                }
+            } catch (const invalid_argument&) {
+                cerr << "Введено значение неподходящего типа. Повторите ввод." << endl;
+            } catch (const out_of_range&) {
+                cerr << "Значение выходит за пределы допустимого диапазона. Повторите ввод." << endl;
             }
         }
     }
 
-    /*
-     * Перегрузка оператора вывода для IntReader.
-     *
-     * @param os Поток вывода.
-     * @param reader Объект IntReader.
-     * @return Возвращает поток вывода.
-     */
-    friend ostream& operator<<(ostream& os, const IntReader& reader) {
-        os << "IntReader {value: " << reader.value << "}";
-        return os;
+protected:
+    void print(ostream& os) const override {
+        os << "IntReader {value: " << value << "}";
     }
 };
 
-/*
- * Считыватель для чисел с плавающей точкой.
- */
-class DoubleReader : public InputReader {
+// Валидатор для максимального значения.
+class MaxValidator : public Validator {
 private:
-    double value;  // Значение, считанное из ввода.
+    int maxValue;
 
 public:
-    /*
-     * Читает число с плавающей точкой из потока.
-     *
-     * @param is Поток ввода.
-     * @return Возвращает true, если чтение прошло успешно, иначе false.
-     */
-    bool read(istream& is) override {
+    MaxValidator(int maxValue) : maxValue(maxValue) {}
+
+    bool validate(const string& value) override {
+        return stoi(value) <= maxValue;
+    }
+};
+
+// Валидатор для минимального значения.
+class MinValidator : public Validator {
+private:
+    int minValue;
+
+public:
+    MinValidator(int minValue) : minValue(minValue) {}
+
+    bool validate(const string& value) override {
+        return stoi(value) >= minValue;
+    }
+};
+
+// Считыватель для строк.
+class StringReader : public Reader {
+private:
+    string& value; // Ссылка на значение
+
+public:
+    StringReader(string& value) : value(value) {}
+
+    void read(istream& in) override {
+        cout << "Введите строку: ";
+        getline(in, value);
+    }
+
+protected:
+    void print(ostream& os) const override {
+        os << "StringReader {value: " << value << "}";
+    }
+};
+
+// Считыватель для чисел с плавающей запятой.
+class DoubleReader : public Reader {
+private:
+    double& value; // Ссылка на значение
+
+public:
+    DoubleReader(double& value) : value(value) {}
+
+    void read(istream& in) override {
         string input;
         while (true) {
-            cout << "Введите число с плавающей точкой (или Ctrl+D для выхода): ";
-            if (!getline(is, input) || input.empty()) return false;
+            cout << "Введите значение с типом double: ";
+            if (!getline(in, input) || input.empty()) return;
 
             try {
                 value = stod(input);
-                return true;
-            } catch (...) {
-                cerr << "Неверный формат. Попробуйте снова." << endl;
+                return; // Успешное считывание
+            } catch (const invalid_argument&) {
+                cerr << "Введено значение неподходящего типа. Повторите ввод." << endl;
+            } catch (const out_of_range&) {
+                cerr << "Значение выходит за пределы допустимого диапазона. Повторите ввод." << endl;
             }
         }
     }
 
-    /*
-     * Перегрузка оператора вывода для DoubleReader.
-     *
-     * @param os Поток вывода.
-     * @param reader Объект DoubleReader.
-     * @return Возвращает поток вывода.
-     */
-    friend ostream& operator<<(ostream& os, const DoubleReader& reader) {
-        os << "DoubleReader {value: " << reader.value << "}";
-        return os;
+protected:
+    void print(ostream& os) const override {
+        os << "DoubleReader {value: " << value << "}";
     }
 };
 
-/*
- * Считыватель для булевых значений.
- */
-class BoolReader : public InputReader {
+// Считыватель для символов.
+class CharReader : public Reader {
 private:
-    bool value;  // Значение, считанное из ввода.
+    char& value; // Ссылка на значение
 
 public:
-    /*
-     * Читает булево значение из потока.
-     *
-     * @param is Поток ввода.
-     * @return Возвращает true, если чтение прошло успешно, иначе false.
-     */
-    bool read(istream& is) override {
+    CharReader(char& value) : value(value) {}
+
+    void read(istream& in) override {
         string input;
         while (true) {
-            cout << "Введите true/false (или Ctrl+D для выхода): ";
-            if (!getline(is, input) || input.empty()) return false;
+            cout << "Введите символ: ";
+            if (!getline(in, input) || input.empty()) return;
 
-            if (input == "true") {
-                value = true;
-                return true;
-            } else if (input == "false") {
-                value = false;
-                return true;
+            if (input.length() == 1) {
+                value = input[0];
+                return; // Успешное считывание
             } else {
-                cerr << "Неверный формат. Попробуйте снова." << endl;
+                cerr << "Ошибка! Введите только один символ." << endl;
             }
         }
     }
 
-    /*
-     * Перегрузка оператора вывода для BoolReader.
-     *
-     * @param os Поток вывода.
-     * @param reader Объект BoolReader.
-     * @return Возвращает поток вывода.
-     */
-    friend ostream& operator<<(ostream& os, const BoolReader& reader) {
-        os << "BoolReader {value: " << boolalpha << reader.value << "}";
-        return os;
+protected:
+    void print(ostream& os) const override {
+        os << "CharReader {value: " << value << "}";
     }
 };
 
-/*
- * Считыватель для символов.
- */
-class CharReader : public InputReader {
+// Валидатор для определенного набора символов.
+class CharacterSetValidator : public Validator {
 private:
-    char value;
+    string allowedChars;
 
 public:
-    bool read(istream& is) override {
-        string input;
-        while (true) {
-            cout << "Введите символ (или Ctrl+D для выхода): ";
-            if (!getline(is, input) || input.empty() || input.length() != 1) {
-                return false;
-            }
-            value = input[0];
-            return true;
-        }
-    }
-
-    friend ostream& operator<<(ostream& os, const CharReader& reader) {
-        os << "CharReader {value: " << reader.value << "}";
-        return os;
-    }
-};
-
-/*
- * Считыватель для строк.
- */
-class StringReader : public InputReader {
-private:
-    string value;
-
-public:
-    bool read(istream& is) override {
-        cout << "Введите строку (или Ctrl+D для выхода): ";
-        if (getline(is, value) && !value.empty()) {
-            return true;
-        }
-        return false;
-    }
-
-    friend ostream& operator<<(ostream& os, const StringReader& reader) {
-        os << "StringReader {value: " << reader.value << "}";
-        return os;
-    }
-};
-
-
-/*
- * Валидатор для максимальной длины строки.
- */
-class MaxLengthValidator : public Validator {
-private:
-    size_t maxLength;      // специальный беззнаковый целочисленный тип, определённый в стандартных библиотеках языков С и С++.
-
-public:
-    MaxLengthValidator(size_t maxLength) : maxLength(maxLength) {}
+    CharacterSetValidator(const string& allowedChars) : allowedChars(allowedChars) {}
 
     bool validate(const string& value) override {
-        return value.length() <= maxLength;
+        return allowedChars.find(value) != string::npos;
     }
 };
 
-/*
- * Валидатор для проверки диапазона.
- */
-class RangeValidator : public Validator {   // попадает ли значение в заданный диапазон (мин. и макс. значение).
-private:
-    int min;  // Минимальное значение.
-    int max;  // Максимальное значение.
-
-public:
-    /*
-     * Конструктор для RangeValidator.
-     *
-     * @param min Минимальное значение.
-     * @param max Максимальное значение.
-     */
-    RangeValidator(int min, int max) : min(min), max(max) {}
-
-    /*
-     * Проверяет, попадает ли значение в заданный диапазон.
-     *
-     * @param value Проверяемое значение.
-     * @return Возвращает true, если значение валидно, иначе false.
-     */
-    bool validate(const string& value) override {
-        try {
-            int intValue = stoi(value);
-            return intValue >= min && intValue <= max;
-        } catch (...) {
-            return false;
-        }
-    }
-};
-
-/*
- * Конвейер для считывания данных.
- */
-class DataPipeline {
-private:
-    vector<InputReader*> readers;
-    vector<Validator*> validators;
-
-public:
-    void addReader(InputReader* reader) {
-        readers.push_back(reader);
-    }
-
-    void addValidator(Validator* validator) {
-        validators.push_back(validator);
-    }
-
-    void run(std::istream& is) {
-    for (size_t i = 0; i < readers.size(); ++i) {
-        if (readers[i]->read(is)) {
-            // Используем dynamic_cast для проверки типа
-            if (auto intReader = dynamic_cast<IntReader*>(readers[i])) {
-                std::cout << *intReader << std::endl;
-            } else if (auto doubleReader = dynamic_cast<DoubleReader*>(readers[i])) {
-                std::cout << *doubleReader << std::endl;
-            } else if (auto stringReader = dynamic_cast<StringReader*>(readers[i])) {
-                std::cout << *stringReader << std::endl;
-            } else if (auto charReader = dynamic_cast<CharReader*>(readers[i])) {
-                std::cout << *charReader << std::endl;
-            }
-
-            if (i < validators.size()) {
-                std::string inputValue;
-                std::cout << "Введите значение для проверки: ";
-                std::getline(is, inputValue);
-                if (!validators[i]->validate(inputValue)) {
-                    std::cerr << "Значение не соответствует требованиям!" << std::endl;
-                }
-            }
-        }
-        delete readers[i];
-    }
+// Переопределение операторов считывания
+istream& operator>>(istream& in, Reader* r) {
+    r->read(in);
+    return in;
 }
 
-};
+istream& operator>>(istream& in, Reader& r) {
+    r.read(in);
+    return in;
+}
 
-/*
- * Главная функция программы.
- */
+// Главная функция программы.
 int main() {
-    DataPipeline pipeline;
+    int intValue = 0;
+    double doubleValue = 0.0;
+    string stringValue;
+    char charValue = '\0'; // Инициализация переменной для считывания символа
 
-    // Добавление считывателей
-    pipeline.addReader(new StringReader());
-    pipeline.addReader(new IntReader());
-    pipeline.addReader(new DoubleReader());
-    pipeline.addReader(new CharReader());
+    // Создание валидаторов
+    MinValidator* minValidator = new MinValidator(10);
+    MaxValidator* maxValidator = new MaxValidator(100);
+    CharacterSetValidator* charValidator = new CharacterSetValidator("abc"); // Разрешенные символы 'a', 'b', 'c'
 
-    // Добавление валидаторов
-    pipeline.addValidator(new MaxLengthValidator(10));  // Для строки
-    pipeline.addValidator(new RangeValidator(1, 100));   // Для целого числа
-    pipeline.addValidator(new RangeValidator(0, 1000));  // Для числа с плавающей точкой
+    // Создание считывателей
+    IntReader intReader(intValue);
+    intReader.addValidator(minValidator);
+    intReader.addValidator(maxValidator);
 
-    pipeline.run(cin);
+    DoubleReader doubleReader(doubleValue);
+    StringReader stringReader(stringValue);
+    CharReader charReader(charValue); // Считыватель для символа
+
+    // Использование оператора считывания
+    cin >> &intReader; // Чтение целого числа
+    cin >> &doubleReader; // Чтение числа с плавающей запятой
+    cin >> &stringReader; // Чтение строки
+    cin >> &charReader; // Чтение символа
+
+    // Проверка валидатора для символа
+    if (!charValidator->validate(string(1, charValue))) {
+        cerr << "Символ не входит в предустановленный набор! Убедитесь, что это один из: " << "abc" << endl;
+    }
+
+    // Вывод считанных значений
+    cout << intReader << endl;
+    cout << doubleReader << endl;
+    cout << stringReader << endl;
+    cout << charReader << endl;
 
     return 0;
 }
-
-/*
- * Главная функция программы.
- */
-/*int main() {
-    InputReader* intReader = new IntReader();
-    if (intReader->read(cin)) {
-        cout << *dynamic_cast<IntReader*>(intReader) << endl;
-    }
-    delete intReader;
-
-    InputReader* doubleReader = new DoubleReader();
-    if (doubleReader->read(cin)) {
-        cout << *dynamic_cast<DoubleReader*>(doubleReader) << endl;
-    }
-    delete doubleReader;
-
-    InputReader* boolReader = new BoolReader();
-    if (boolReader->read(cin)) {
-        cout << *dynamic_cast<BoolReader*>(boolReader) << endl;
-    }
-    delete boolReader;
-
-    return 0;
-}*/
-
