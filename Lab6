@@ -69,10 +69,29 @@ private:
 public:
     IntReader(int& value) : value(value) {}
 
+    /**
+     * Adds a validator to the list of validators.
+     *
+     * @param validator pointer to the validator object
+     *
+     * @return void
+     *
+     * @throws none
+     */
     void addValidator(Validator* validator) {
         validators.emplace_back(validator);
     }
 
+        /**
+     * Reads an integer value from the input stream and validates it against a set of predefined validators.
+     *
+     * @param in the input stream to read from
+     *
+     * @return void
+     *
+     * @throws invalid_argument if the input value is not a valid integer
+     * @throws out_of_range if the input value is outside the valid range
+     */
     void read(istream& in) override {
         string input;
         while (true) {
@@ -104,6 +123,15 @@ public:
     }
 
 protected:
+        /**
+     * Prints the state of the IntReader object to the output stream.
+     *
+     * @param os the output stream to print to
+     *
+     * @return void
+     *
+     * @throws none
+     */
     void print(ostream& os) const override {
         os << "IntReader {value: " << value << "}";
     }
@@ -130,6 +158,16 @@ private:
 public:
     MinValidator(int minValue) : minValue(minValue) {}
 
+    /**
+     * Validates if the given string value is greater than or equal to the minimum value.
+     *
+     * @param value the string value to be validated
+     *
+     * @return true if the value is valid, false otherwise
+     *
+     * @throws invalid_argument if the string cannot be converted to an integer
+     * @throws out_of_range if the converted integer is outside the valid range
+     */
     bool validate(const string& value) override {
         return stoi(value) >= minValue;
     }
@@ -143,12 +181,30 @@ private:
 public:
     StringReader(string& value) : value(value) {}
 
+    /**
+     * Reads a string from the input stream and stores it in the value field.
+     *
+     * @param in the input stream to read from
+     *
+     * @return void
+     *
+     * @throws none
+     */
     void read(istream& in) override {
         cout << "Введите строку: ";
         getline(in, value);
     }
 
 protected:
+    /**
+     * Prints the contents of the StringReader to the provided output stream.
+     *
+     * @param os the output stream to print to
+     *
+     * @return none
+     *
+     * @throws none
+     */
     void print(ostream& os) const override {
         os << "StringReader {value: " << value << "}";
     }
@@ -162,6 +218,16 @@ private:
 public:
     DoubleReader(double& value) : value(value) {}
 
+        /**
+     * Reads a double value from the input stream and stores it in the value field.
+     *
+     * @param in the input stream to read from
+     *
+     * @return void
+     *
+     * @throws invalid_argument if the input value is not a valid double
+     * @throws out_of_range if the input value is outside the valid range
+     */
     void read(istream& in) override {
         string input;
         while (true) {
@@ -180,6 +246,16 @@ public:
     }
 
 protected:
+
+    /**
+     * Prints the contents of the DoubleReader to the provided output stream.
+     *
+     * @param os the output stream to print to
+     *
+     * @return none
+     *
+     * @throws none
+     */
     void print(ostream& os) const override {
         os << "DoubleReader {value: " << value << "}";
     }
@@ -192,6 +268,16 @@ private:
 
 public:
     CharReader(char& value) : value(value) {}
+
+        /**
+     * Reads a single character from the input stream and stores it in the value field.
+     *
+     * @param in the input stream to read from
+     *
+     * @return void
+     *
+     * @throws none
+     */
 
     void read(istream& in) override {
         string input;
@@ -209,6 +295,15 @@ public:
     }
 
 protected:
+        /**
+     * Prints the contents of the CharReader to the provided output stream.
+     *
+     * @param os the output stream to print to
+     *
+     * @return none
+     *
+     * @throws none
+     */
     void print(ostream& os) const override {
         os << "CharReader {value: " << value << "}";
     }
@@ -222,6 +317,15 @@ private:
 public:
     CharacterSetValidator(const string& allowedChars) : allowedChars(allowedChars) {}
 
+    /**
+     * Validates if the given string value is present in the allowed characters set.
+     *
+     * @param value the string value to be validated
+     *
+     * @return true if the value is present in the allowed characters set, false otherwise
+     *
+     * @throws none
+     */
     bool validate(const string& value) override {
         return allowedChars.find(value) != string::npos;
     }
