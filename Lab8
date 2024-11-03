@@ -1,0 +1,244 @@
+/**Задание
+ * Лабораторная работа 8. Вариант 3 - моделирование стрельбы из оружия
+ * Оружие:
+ *      Оружие содержит магазин на 30 патронов.
+ *      При стрельбе, оружие забирает патрон из магазина и выстреливает его, вызывая демонстрацию 
+ *      эффекта патрона. На выстрел тратиться время.
+ *      Оружие не может самостоятельно перезарядить свой магазин.
+ * Магазин:
+ *      Магазин содержит 30 патронов.
+ *      Патроны заряжаются в магазин по одному и кладутся внутри него в стопку.
+ *      Выходят патроны из магазина в порядке обратном порядку их помещения. 
+ *      (Время на зарядку больше, чем на изъятие)
+ *      На помещение одного патрона в магазин тратится определенное время. На изъятие патрона из магазина, так же тратится время.
+ * Патрон:
+ *      Патроны делятся на 3 типа: дозвуковые, обычные(сверх звуковые), трассирующие.
+ *      Патроны одного типа имеют одинаковые свойства.
+ *      Патроны разных типов имеют разных эффект от выстрела (дозвуковые патроны имеют 
+ *      стихий звук выстрела, обычные патроны имеют стандартный звук выстрела, зажигательные имеют обычный звук выстрела и эффект подсветки траектории движения), все эффекты выводятся в консоль как текстовая информация после выстрела.
+ * 
+ * 1. Реализовать класс Оружие, Магазин, Патрон.
+ * 2. Реализовать метод заполнения магазина патронами из предустановленного набора патронов.
+ * 3. Реализовать метод изъятия патрона из магазина.
+ * 4. Реализовать метод выстрела патрона из оружия.
+ * 5. (Усложненный вариант) Реализовать процесс стрельбы из оружия. 
+ *      Процесс циклический до тех пор пока не кончатся все патроны в сгенерированной коробке. При этом:
+        5.1. В начале стрельбы генерируется коробка патронов содержащая от 300 до 500 разных патронов.
+        5.2. Перед стрельбой в магазин заряжается 30 патронов из коробки (запрещается прямое 
+        взаимодействие с хранилищем патронов в магазине).
+        5.3. Магазин помещается в оружие.
+        5.4.Оружие выстреливает патроны изымая их из магазина по одному 
+        (запрещается прямое взаимодействие с хранилищем патронов в магазине).
+        5.5. После окончания патронов, магазин изымается из оружия и производится повторная зарядка.
+ * 6. (Усложненный вариант) После завершения процесса стрельбы вывести статистику:
+        6.1. Суммарное количество отстрелянных патронов и заряженных магазинов.
+        6.2. Суммарное время потраченное на зарядку патронов в магазин.
+        6.3.Суммарное время стрельбы.
+        6.4. Количество каждого типа патронов.
+ */
+
+/** Теория
+ * 1. Контейнерный класс - это класс, предназначенный для хранения и организации нескольких объектов опр. типа д.
+ * 2. Функционал классов-контейнеров: 
+ *      - создание пустого контейнера
+ *      - добавление нового объекта в контейнер
+ *      - удаление объекта из контейнера
+ *      - просмотр количества объектов, находящихся на данный момент в контейнере
+ *      - доступ к сохранённым объектам
+ *      - сортировка объектов в контейнере (не всегда)
+ * 3. Тип отношений - "Член чего-то"
+ * 4. Два типа контейнеров: Последовательные (эл-ты в посл-ти (array, deque, vector, list)) 
+ *                          Ассоциативные ()
+ * 5. Стек - структура данных LIFO (Last In First Out - принцип работы структуры данных). Класть/доставать только с одной стороны
+ * 6. Очередь - структура данных FIFO (First In First Out - принцип работы структуры данных). Первый пришёл, первый вышел
+ */
+#include <iostream>
+#include <stack>
+#include <string>
+#include <stdexcept>
+#include <vector>
+#include <random>
+#include <unistd.h> // Для функции sleep
+
+enum class BulletType {
+    Subsonic,
+    Regular,
+    Tracer
+};
+
+class Bullet {
+public:
+    Bullet(BulletType type) : type(type) {}
+
+    void shootEffect() const {
+        switch (type) {
+            case BulletType::Subsonic:
+                std::cout << "Выстрел с дозвуковым патроном: тихий звук.\n";
+                break;
+            case BulletType::Regular:
+                std::cout << "Выстрел с обычным патроном: стандартный звук.\n";
+                break;
+            case BulletType::Tracer:
+                std::cout << "Выстрел с трассирующим патроном: стандартный звук, виден след.\n";
+                break;
+        }
+    }
+
+    BulletType getType() const { return type; }
+
+    friend std::ostream& operator<<(std::ostream& os, const Bullet& bullet) {
+        std::string typeStr;
+        switch (bullet.type) {
+            case BulletType::Subsonic: typeStr = "Дозвуковой"; break;
+            case BulletType::Regular: typeStr = "Обычный"; break;
+            case BulletType::Tracer: typeStr = "Трассирующий"; break;
+        }
+        os << "Bullet {" << typeStr << "}";
+        return os;
+    }
+
+private:
+    BulletType type;
+};
+
+class GunStore {
+public:
+    GunStore() : loadingTime(1), firingTime(1) {}
+
+    void loadBullet(const Bullet& bullet) {
+        if (bullets.size() < maxBullets) {
+            sleep(loadingTime); // Задержка при загрузке
+            bullets.push(bullet);
+            std::cout << "Патрон загружен в магазин.\n";
+        } else {
+            std::cout << "Магазин полный!\n";
+        }
+    }
+
+    void fillStore(const std::vector<Bullet>& bulletSet) {
+        for (const auto& bullet : bulletSet) {
+            loadBullet(bullet);
+        }
+    }
+
+    Bullet fireBullet() {
+        if (!bullets.empty()) {
+            sleep(firingTime); // Задержка при выстреле
+            Bullet bullet = bullets.top();
+            bullets.pop();
+            return bullet;
+        } else {
+            throw std::runtime_error("Магазин пуст!");
+        }
+    }
+
+    bool isEmpty() const {
+        return bullets.empty();
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const GunStore& gunstore) {
+        os << "GunStore {Патронов в магазине: " << gunstore.bullets.size() << "}";
+        return os;
+    }
+
+private:
+    static const int maxBullets = 30;
+    std::stack<Bullet> bullets;
+    int loadingTime; // время на зарядку патрона
+    int firingTime; // время на выстрел
+};
+
+class Weapon {
+public:
+    Weapon() : gunStore() {}
+
+    void loadBullet(const Bullet& bullet) {
+        gunStore.loadBullet(bullet);
+    }
+
+    void fillStore(const std::vector<Bullet>& bulletSet) {
+        gunStore.fillStore(bulletSet);
+    }
+
+    Bullet fire() {
+        return gunStore.fireBullet();
+    }
+
+    bool isStoreEmpty() const {
+        return gunStore.isEmpty();
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const Weapon& weapon) {
+        os << "Weapon {" << weapon.gunStore << "}";
+        return os;
+    }
+
+private:
+    GunStore gunStore;
+};
+
+std::vector<Bullet> generateBulletBox(int minBullets = 300, int maxBullets = 500) {
+    std::vector<Bullet> bulletBox;
+    std::mt19937 rng(std::random_device{}());
+    std::uniform_int_distribution<int> dist(0, 2); // Три типа патронов
+
+    int totalBullets = std::uniform_int_distribution<int>(minBullets, maxBullets)(rng);
+
+    for (int i = 0; i < totalBullets; ++i) {
+        BulletType type = static_cast<BulletType>(dist(rng));
+        bulletBox.emplace_back(type);
+    }
+
+    return bulletBox;
+}
+
+int main() {
+    std::vector<Bullet> bulletBox = generateBulletBox();
+    Weapon weapon;
+
+    int totalFired = 0;
+    int totalStoresLoaded = 0;
+    int totalLoadingTime = 0;
+    int totalFiringTime = 0;
+    int countSubsonic = 0;
+    int countRegular = 0;
+    int countTracer = 0;
+
+    while (!bulletBox.empty()) {
+        // Заполнение магазина
+        for (int i = 0; i < 30 && !bulletBox.empty(); ++i) {
+            Bullet bullet = bulletBox.back();
+            bulletBox.pop_back();
+            weapon.loadBullet(bullet);
+        }
+        totalStoresLoaded++;
+
+        // Стрельба
+        while (!weapon.isStoreEmpty()) {
+            Bullet bullet = weapon.fire();
+            totalFiringTime += 1; // Каждая стрельба занимает 1 секунду
+            totalFired++;
+
+            // Подсчет патронов по типам
+            switch (bullet.getType()) {
+                case BulletType::Subsonic: countSubsonic++; break;
+                case BulletType::Regular: countRegular++; break;
+                case BulletType::Tracer: countTracer++; break;
+            }
+        }
+
+        // Считаем время на зарядку
+        totalLoadingTime += 30; // Каждая загрузка занимает 1 секунду на патрон
+    }
+
+    // Вывод статистики
+    std::cout << "Суммарное количество отстрелянных патронов: " << totalFired << "\n";
+    std::cout << "Суммарное количество заряженных магазинов: " << totalStoresLoaded << "\n";
+    std::cout << "Суммарное время потраченное на зарядку патронов: " << totalLoadingTime << " секунд\n";
+    std::cout << "Суммарное время стрельбы: " << totalFiringTime << " секунд\n";
+    std::cout << "Количество дозвуковых патронов: " << countSubsonic << "\n";
+    std::cout << "Количество обычных патронов: " << countRegular << "\n";
+    std::cout << "Количество трассирующих патронов: " << countTracer << "\n";
+
+    return 0;
+}
