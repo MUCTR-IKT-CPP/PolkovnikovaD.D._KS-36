@@ -58,7 +58,8 @@
 #include <stdexcept>
 #include <vector>
 #include <random>
-#include <unistd.h> // Для функции sleep
+#include <unistd.h> // Для функции usleep
+using namespace std;
 
 enum class BulletType {
     Subsonic,
@@ -73,21 +74,21 @@ public:
     void shootEffect() const {
         switch (type) {
             case BulletType::Subsonic:
-                std::cout << "Выстрел с дозвуковым патроном: тихий звук.\n";
+                cout << "Выстрел с дозвуковым патроном: тихий звук.\n";
                 break;
             case BulletType::Regular:
-                std::cout << "Выстрел с обычным патроном: стандартный звук.\n";
+                cout << "Выстрел с обычным патроном: стандартный звук.\n";
                 break;
             case BulletType::Tracer:
-                std::cout << "Выстрел с трассирующим патроном: стандартный звук, виден след.\n";
+                cout << "Выстрел с трассирующим патроном: стандартный звук, виден след.\n";
                 break;
         }
     }
 
     BulletType getType() const { return type; }
 
-    friend std::ostream& operator<<(std::ostream& os, const Bullet& bullet) {
-        std::string typeStr;
+    friend ostream& operator<<(ostream& os, const Bullet& bullet) {
+        string typeStr;
         switch (bullet.type) {
             case BulletType::Subsonic: typeStr = "Дозвуковой"; break;
             case BulletType::Regular: typeStr = "Обычный"; break;
@@ -103,72 +104,126 @@ private:
 
 class GunStore {
 public:
-    GunStore() : loadingTime(1), firingTime(1) {}
+    GunStore() : loadingTime(10), firingTime(10) {} // Задержка 10 миллисекунд
 
+    /**
+     * Loads a bullet into the gun store.
+     *
+     * @param bullet The bullet to be loaded.
+     *
+     * @throws runtime_error If the gun store is full.
+     */
     void loadBullet(const Bullet& bullet) {
         if (bullets.size() < maxBullets) {
-            sleep(loadingTime); // Задержка при загрузке
+            usleep(loadingTime * 1000); // Задержка при загрузке в миллисекундах
             bullets.push(bullet);
-            std::cout << "Патрон загружен в магазин.\n";
+            cout << "Патрон загружен в магазин.\n";
         } else {
-            std::cout << "Магазин полный!\n";
+            cout << "Магазин полный!\n";
         }
     }
 
-    void fillStore(const std::vector<Bullet>& bulletSet) {
+    /**
+     * Fills the gun store with a set of bullets.
+     *
+     * @param bulletSet A vector of bullets to be loaded into the gun store.
+     *
+     * @throws runtime_error If the gun store is full.
+     */
+    void fillStore(const vector<Bullet>& bulletSet) {
         for (const auto& bullet : bulletSet) {
             loadBullet(bullet);
         }
     }
 
+    /**
+     * Fires a bullet from the gun store.
+     *
+     * @return The fired bullet.
+     *
+     * @throws runtime_error If the gun store is empty.
+     */
     Bullet fireBullet() {
         if (!bullets.empty()) {
-            sleep(firingTime); // Задержка при выстреле
+            usleep(firingTime * 1000); // Задержка при выстреле в миллисекундах
             Bullet bullet = bullets.top();
             bullets.pop();
             return bullet;
         } else {
-            throw std::runtime_error("Магазин пуст!");
+            throw runtime_error("Магазин пуст!");
         }
     }
 
+    /**
+     * Checks if the gun store is empty.
+     *
+     * @return True if the gun store is empty, false otherwise.
+     */
     bool isEmpty() const {
         return bullets.empty();
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const GunStore& gunstore) {
+    friend ostream& operator<<(ostream& os, const GunStore& gunstore) {
         os << "GunStore {Патронов в магазине: " << gunstore.bullets.size() << "}";
         return os;
     }
 
 private:
     static const int maxBullets = 30;
-    std::stack<Bullet> bullets;
-    int loadingTime; // время на зарядку патрона
-    int firingTime; // время на выстрел
+    stack<Bullet> bullets;
+    int loadingTime; // время на зарядку патрона в миллисекундах
+    int firingTime; // время на выстрел в миллисекундах
 };
 
 class Weapon {
 public:
     Weapon() : gunStore() {}
 
+    /**
+     * Loads a bullet into the weapon's gun store.
+     *
+     * @param bullet The bullet to be loaded into the gun store.
+     *
+     * @throws runtime_error If the gun store is full.
+     */
     void loadBullet(const Bullet& bullet) {
         gunStore.loadBullet(bullet);
     }
 
-    void fillStore(const std::vector<Bullet>& bulletSet) {
+    /**
+     * Fills the weapon's gun store with a set of bullets.
+     *
+     * @param bulletSet A vector of bullets to be loaded into the gun store.
+     *
+     * @throws runtime_error If the gun store is full.
+     */
+    void fillStore(const vector<Bullet>& bulletSet) {
         gunStore.fillStore(bulletSet);
     }
 
+    /**
+     * Fires a bullet from the weapon.
+     *
+     * @return The fired bullet.
+     *
+     * @throws runtime_error If the gun store is empty.
+     */
     Bullet fire() {
         return gunStore.fireBullet();
     }
 
+    /**
+     * Fires a bullet from the weapon.
+     *
+     * @return The fired bullet.
+     *
+     * @throws runtime_error If the gun store is empty.
+     */
     bool isStoreEmpty() const {
         return gunStore.isEmpty();
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const Weapon& weapon) {
+    friend ostream& operator<<(ostream& os, const Weapon& weapon) {
         os << "Weapon {" << weapon.gunStore << "}";
         return os;
     }
@@ -177,12 +232,20 @@ private:
     GunStore gunStore;
 };
 
-std::vector<Bullet> generateBulletBox(int minBullets = 300, int maxBullets = 500) {
-    std::vector<Bullet> bulletBox;
-    std::mt19937 rng(std::random_device{}());
-    std::uniform_int_distribution<int> dist(0, 2); // Три типа патронов
+/**
+ * Generates a vector of bullets with random types.
+ *
+ * @param minBullets The minimum number of bullets to generate (default: 300).
+ * @param maxBullets The maximum number of bullets to generate (default: 500).
+ *
+ * @return A vector of bullets with random types.
+ */
+vector<Bullet> generateBulletBox(int minBullets = 300, int maxBullets = 500) {
+    vector<Bullet> bulletBox;
+    mt19937 rng(random_device{}());     // Генератор псевдослучайных чисел
+    uniform_int_distribution<int> dist(0, 2); // Три типа патронов
 
-    int totalBullets = std::uniform_int_distribution<int>(minBullets, maxBullets)(rng);
+    int totalBullets = uniform_int_distribution<int>(minBullets, maxBullets)(rng);
 
     for (int i = 0; i < totalBullets; ++i) {
         BulletType type = static_cast<BulletType>(dist(rng));
@@ -192,8 +255,15 @@ std::vector<Bullet> generateBulletBox(int minBullets = 300, int maxBullets = 500
     return bulletBox;
 }
 
+/**
+ * The main function that simulates shooting with a weapon using a set of bullets.
+ *
+ * @return 0 if the simulation is completed successfully.
+ *
+ * @throws None
+ */
 int main() {
-    std::vector<Bullet> bulletBox = generateBulletBox();
+    vector<Bullet> bulletBox = generateBulletBox();
     Weapon weapon;
 
     int totalFired = 0;
@@ -216,7 +286,7 @@ int main() {
         // Стрельба
         while (!weapon.isStoreEmpty()) {
             Bullet bullet = weapon.fire();
-            totalFiringTime += 1; // Каждая стрельба занимает 1 секунду
+            totalFiringTime += 1; // Каждая стрельба занимает 10 миллисекунд
             totalFired++;
 
             // Подсчет патронов по типам
@@ -228,17 +298,17 @@ int main() {
         }
 
         // Считаем время на зарядку
-        totalLoadingTime += 30; // Каждая загрузка занимает 1 секунду на патрон
+        totalLoadingTime += 30; // Каждая загрузка занимает 10 миллисекунд
     }
 
     // Вывод статистики
-    std::cout << "Суммарное количество отстрелянных патронов: " << totalFired << "\n";
-    std::cout << "Суммарное количество заряженных магазинов: " << totalStoresLoaded << "\n";
-    std::cout << "Суммарное время потраченное на зарядку патронов: " << totalLoadingTime << " секунд\n";
-    std::cout << "Суммарное время стрельбы: " << totalFiringTime << " секунд\n";
-    std::cout << "Количество дозвуковых патронов: " << countSubsonic << "\n";
-    std::cout << "Количество обычных патронов: " << countRegular << "\n";
-    std::cout << "Количество трассирующих патронов: " << countTracer << "\n";
+    cout << "Суммарное количество отстрелянных патронов: " << totalFired << "\n";
+    cout << "Суммарное количество заряженных магазинов: " << totalStoresLoaded << "\n";
+    cout << "Суммарное время потраченное на зарядку патронов: " << totalLoadingTime << " миллисекунд\n";
+    cout << "Суммарное время стрельбы: " << totalFiringTime << " миллисекунд\n";
+    cout << "Количество дозвуковых патронов: " << countSubsonic << "\n";
+    cout << "Количество обычных патронов: " << countRegular << "\n";
+    cout << "Количество трассирующих патронов: " << countTracer << "\n";
 
     return 0;
 }
