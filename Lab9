@@ -1,0 +1,232 @@
+/** Лабораторная работа №9. Вариант 1.
+ * Требуется разработать шаблонный класс отсортированный вектор.
+ *  - Для реализации вектора использовать наследование от касса вектор стандартной библиотеки.
+ *  - Для сортировки вектора использовать функцию стандартной библиотеки.
+ * 1) Реализовать метод, который проверяет количество элементов в векторе, 
+ * делящихся нацело на введенное пользователем число. Использовать лямбда-выражение.
+ * 2) Создайте конструктор который принимает initializer_list для инициализации 
+ * через фигурные скобки и сортирует содержимое вектора.
+ * 3) Перегрузить дружественную функцию - оператор вывода данных в поток (использовать* copy)
+ * 4) Перегрузить функцию insert которая позволит вставлять элемент в первую позицию, 
+ *  в которую можно поместить элемент не изменив порядка следования объектов. 
+ *  (Изначально insert принимает 2 аргумента – позиция, перед которой надо 
+ *  вставить новый элемент и значение нового элемента.)
+    * 5) Реализовать метод, который выводит на экран все перестановки без повторений из
+    *  содержимого данного вектора Пояснение: У вас в векторе лежат элементы 1, 2, 3. 
+    *  Вы должны вывести: 1 2 3 1 3 2 2 1 3 2 3 1
+ */
+/**Теория
+ * Предикат - функция, возвращающая bool, также это может быть функтор оператор () которого возвращает
+ * bool. Унарный предикат — предикат принимающий 1 аргумент, к примеру !a. Бинарный предикат —
+ * предикат, принимающий 2 аргумента, примеры: a>b, a<b и др.
+ * 
+ * Функтор - сокращением от "функциональные объекты". Функциональный объект является
+ * экземпляром класса С++, в котором определён operator(). Если вы определите operator() для C++ класса, то
+ * вы получите объект, который действует как функция, но может также хранить состояние.
+ * 
+ * Лямбда выражение - техника программирования,  сочетающая в себе преимущества указателей на функции и
+ * функциональных объектов, позволяет избежать неудобств. Как и функциональные объекты, лямбда
+ * выражения позволяют хранить состояния, но их компактный синтаксис в отличие от функциональных
+ * объектов не требует объявления класса. Лямбда выражения позволяют вам писать более компактный код и
+ * избежать ошибок, нежели используя функциональные объекты.
+ */
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm> // for sort, count_if, copy, lower_bound
+#include <functional> // for bind
+#include <iterator>
+#include <sstream>
+
+using namespace std;
+
+template <typename T>
+class SortedVector : public vector<T> {
+public:
+    // Конструктор, принимающий initializer_list. Позволит отсортировать вектор сразу несколькими значениями,
+    // которые будут автоматически отсортированы 
+    SortedVector(initializer_list<T> initlist) {
+        this->insert(this->end(), initlist.begin(), initlist.end());
+        sort(this->begin(), this->end());
+    }
+
+     // Конструктор, принимающий пару итераторов
+    /*SortedVector(typename vector<T>::iterator begin, typename vector<T>::iterator end) {
+        this->insert(this->end(), begin, end);
+        sort(this->begin(), this->end());
+    }*/
+
+    /**
+     * @brief Inserts an element at the position where it would be in sorted order.
+     *
+     * @param position The position where the element should be inserted.
+     * @param value The value to be inserted.
+     *
+     * @details This method overrides the vector's insert method to insert the element
+     * at the position where it would be in sorted order. It first finds the position
+     * using lower_bound and then inserts the element at that position.
+     */
+    void inert(const typename vector<T>::iterator& position, const T& value) {
+        // Вставляем элемент в найденную позицию
+        this->insert(position, value);
+    }
+
+    /**
+     * @brief Inserts an element at the position where it would be in sorted order without changing
+     * the sorted order of the vector.
+     *
+     * @param value The value to be inserted.
+     *
+     * @details This method overrides the vector's insert method to insert the element
+     * at the position where it would be in sorted order without changing the sorted order.
+     * It first finds the position using lower_bound and then inserts the element at that position.
+     */
+    void inert(const T& value) {
+        // Search for the position of the element in the sorted vector using binary search
+        auto pos = lower_bound(this->begin(), this->end(), value);
+        // Insert the element at the found position
+        this->insert(pos, value);
+    }
+
+
+    //Метод для подсчёта элементов, делящихся нацело на введенное пользователем число
+    int countDivisibleBy(int divisor) const {
+        // Лямбда-выражение для проверки делимости на число
+        auto isDivisible = [divisor](const T& value) {
+            return value % divisor == 0;
+        };
+
+        // Подсчитываем количество элементов, которые делятся на divisor
+        return count_if(this->begin(), this->end(), isDivisible);
+    }
+
+    /**
+     * @brief Prints all permutations of the elements in the vector without repetition.
+     *
+     * @details This method uses the next_permutation algorithm to generate all permutations
+     * of the elements in the vector and prints them to the console. The number of
+     * permutations is also printed.
+     */
+    void printPermutations() const {
+        int count = 0;
+        // Create a copy of the vector
+        vector<T> temp = *this;
+
+        // Iterate through all permutations using next_permutation
+        do {
+            // Print the current permutation
+            for (const auto& elem : temp) {
+                cout << elem << " ";
+            }
+            cout << endl;
+            count++;
+        } while (next_permutation(temp.begin(), temp.end()));
+
+        // Print the number of permutations
+        cout << "the number of permutations: " << count << endl;
+    }
+
+    // Method to print all elements in the vector
+/**
+ * @brief Prints all elements of the vector to the console.
+ *
+ * @details This method iterates through the vector and outputs each element followed
+ * by a space. A newline is printed after all elements are outputted.
+ */
+void print() const {
+    // Iterate through each element in the vector
+    for (const auto& elem : *this) {
+        // Print the element followed by a space
+        cout << elem << " ";
+    }
+    // Print a newline at the end
+    cout << endl;
+}
+
+    // Перегрузка оператора вывода в поток (копируем элементы вектора в поток)
+    friend ostream& operator<<(ostream& os, const SortedVector<T>& vec) {
+        // Используем copy для вывода содержимого вектора
+        copy(vec.begin(), vec.end(), ostream_iterator<T>(os, " "));
+        return os;
+    }
+};
+
+/**
+ * The main function is the entry point of the program. It provides a menu-driven interface 
+ * to interact with a SortedVector class. The user can add elements to the vector, check 
+ * divisibility, print permutations, rewrite the vector, or exit the program.
+ *
+ * @return 0 to indicate successful execution of the program.
+ */
+int main() {
+    int choice;
+    // Инициализация с использавнием initializer_list
+    SortedVector<int> vec = { 10, 15, 20, 25, 30, 7 };
+
+    do {
+        cout << "________________________________" << endl;
+        cout << "Sorted Vector: " << endl;
+        vec.print();
+        cout << "\n     Choose an option:" << endl;
+        cout << "\n1) Add an element without disturbing the order;" << endl;
+        cout << "\n2) Add the number to check divisibility;" << endl;
+        cout << "\n3) Show all permutations and count them;" << endl;
+        cout << "\n4) Rewrite the vector;" << endl;
+        cout << "\n5) Exit." << endl;
+        cin >> choice;
+
+        switch (choice) {
+            case 1: {
+                int value;
+                cout << "Add element:" << endl;
+                cin >> value;
+                cout << "Inserting " << value << " ..." << endl;
+                vec.inert(value);  // Вставка числа в правильное место
+                cout << "Sorted Vector after inserting: " << endl;
+                vec.print();  // Ожидаемый вывод: 7 10 15 18 20 25 30
+                break;
+            }
+            case 2: {
+                // Вводим число для проверки делимости
+                int divisor;
+                cout << "Input the number to check divisibility: ";
+                cin >> divisor;
+
+                // Подсчёт элементов, делящихся нацело на введенное пользователем число
+                int count = vec.countDivisibleBy(divisor);
+                cout << "The number of elements divisible by " << divisor << ": " << count << endl;
+                break;
+            }
+            case 3: {
+                cout << "All permutations: " << endl;
+                vec.printPermutations();
+                break;
+            }
+            case 4: {
+                // Вводим новый вектор чисел через пробел
+                cin.ignore(); // Игнорируем оставшийся символ новой строки после ввода числа divisor
+                string line;
+                getline(cin, line);
+                stringstream ss(line);
+                vector<int> newNumbers;
+                int num;
+                while(ss >> num) {
+                    newNumbers.push_back(num); // Добавляем каждое число в новый вектор
+                }
+                vec.clear();
+                vec.insert(vec.end(), newNumbers.begin(), newNumbers.end());
+                sort(vec.begin(), vec.end());
+                cout << "New sorted vector: " << endl;
+                vec.print(); // Выводим новый отсортированный вектор 
+                break;
+            }
+            case 5: {
+                break;
+            }
+            default:
+                cout << "Invalid choice." << endl;
+        }   
+    } while(choice != 5);
+
+    return 0;
+}
